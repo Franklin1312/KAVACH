@@ -488,7 +488,7 @@ The overwhelming majority of delivery partners use mid-range Android devices (�
 ## 9. Tech Stack & Architecture
 
 ### System Architecture Overview
----
+``` 
 ┌─────────────────────────────────────────────────────────────────┐
 │                        KAVACH PLATFORM                          │
 │                                                                 │
@@ -558,7 +558,7 @@ FRAUD ENGINE (7 Layers — runs inside Claims Engine)
    Layer 5 · Duplicate Claim Prevention
    Layer 6 · Earnings Continuity Audit
    Layer 7 · Isolation Forest Real-Time Score (0–100)
----
+```
 ### Technology Choices
 
 | Layer | Technology | Justification |
