@@ -489,157 +489,75 @@ The overwhelming majority of delivery partners use mid-range Android devices (�
 
 ### System Architecture Overview
 
-<!-- Architecture Diagram -->
-<svg width="100%" viewBox="0 0 680 780" xmlns="http://www.w3.org/2000/svg" style="font-family:sans-serif">
-<defs>
-  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-    <path d="M2 1L8 5L2 9" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  </marker>
-</defs>
+┌─────────────────────────────────────────────────────────────────┐
+│                        KAVACH PLATFORM                          │
+│                                                                 │
+│   ┌─────────────────┐              ┌──────────────────────┐     │
+│   │   Worker App    │              │   Admin Dashboard    │     │
+│   │ (Android/Mobile)│              │  (Insurer Analytics) │     │
+│   └────────┬────────┘              └──────────┬───────────┘     │
+│            │                                  │                 │
+│   ┌────────▼──────────────────────────────────▼───────────┐     │
+│   │              API Gateway (Node.js / Express)          │     │
+│   │           Auth · Routing · Rate Limiting              │     │
+│   └──────┬──────────────┬──────────────┬──────────────────┘     │
+│          │              │              │                        │
+│   ┌──────▼──────┐ ┌─────▼──────┐ ┌────▼──────────┐              │
+│   │   Policy    │ │   Claims   │ │  ML Services  │              │
+│   │   Service   │ │   Engine   │ │  (FastAPI)    │              │
+│   │             │ │            │ │               │              │
+│   │ Weekly DIT  │ │  Trigger   │ │ - DIT Model   │              │
+│   │ premium     │ │  eval +    │ │ - Fraud Model │              │
+│   │ calc +      │ │  payout    │ │ - Zone Risk   │              │
+│   │ activation  │ │  orch.     │ │ - NLP Engine  │              │
+│   └──────┬──────┘ └─────┬──────┘ └───────────────┘              │
+│          │              │                                       │
+│          │       ┌──────▼───────────────┐                       │
+│          │       │  Trigger Orchestrator │                      │
+│          │       │  (Redis Queue)        │                      │
+│          │       │  3-source validation  │                      │
+│          │       └──────────────────────┘                       │
+│          │                    │                                 │
+│   ┌──────▼────────────────────▼───────────────────────────┐     │
+│   │                  PostgreSQL + PostGIS                 │     │
+│   │       Workers · Policies · Claims · Audit Logs        │     │
+│   └───────────────────────────────────────────────────────┘     │
+│                                                                 │
+│   ┌──────────────────────────────────────────────────────┐      │
+│   │  Notifications Service                               │      │
+│   │  WhatsApp Business API · SMS                         │      │
+│   └──────────────────────────────────────────────────────┘      │
+└─────────────────────────────────────────────────────────────────┘
 
-<!-- Title -->
-<text x="340" y="24" text-anchor="middle" font-size="15" font-weight="600" fill="#e6edf3">KAVACH — System Architecture</text>
+EXTERNAL INTEGRATIONS
+──────────────────────────────────────────────────────────────────
+ Weather / Environment
+   IMD Rainfall API          ──►  Trigger Orchestrator
+   OpenWeatherMap API         ──►  Trigger Orchestrator
+   CPCB AQI API              ──►  Trigger Orchestrator
+   CWC Flood Level API        ──►  Trigger Orchestrator
 
-<!-- Worker PWA -->
-<rect x="40" y="44" width="130" height="52" rx="8" fill="#0f6e56" stroke="#1d9e75" stroke-width="0.5"/>
-<text x="105" y="66" text-anchor="middle" font-size="13" font-weight="600" fill="#9fe1cb">Worker PWA</text>
-<text x="105" y="82" text-anchor="middle" font-size="11" fill="#5dcaa5">React.js (mobile-first)</text>
+ Social / Civil
+   Twitter/X Streaming API   ──►  NLP Engine  ──►  Trigger Orchestrator
+   State Police / PIB API    ──►  NLP Engine  ──►  Trigger Orchestrator
 
-<!-- Admin Dashboard -->
-<rect x="510" y="44" width="130" height="52" rx="8" fill="#0f6e56" stroke="#1d9e75" stroke-width="0.5"/>
-<text x="575" y="66" text-anchor="middle" font-size="13" font-weight="600" fill="#9fe1cb">Admin Dashboard</text>
-<text x="575" y="82" text-anchor="middle" font-size="11" fill="#5dcaa5">Insurer analytics</text>
+ Platform
+   Zomato Partner API        ──►  Claims Engine + DIT Training
+   Swiggy Partner API        ──►  Claims Engine + DIT Training
 
-<!-- Arrows to API Gateway -->
-<line x1="170" y1="70" x2="252" y2="130" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-<line x1="510" y1="70" x2="428" y2="130" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
+ Payments & Identity
+   Razorpay API              ──►  Policy Service (AutoPay) + Claims Engine (Payout)
+   Aadhaar / DigiLocker API  ──►  KYC Service
 
-<!-- API Gateway -->
-<rect x="200" y="118" width="280" height="48" rx="8" fill="#3b1f6b" stroke="#bc8cff" stroke-width="0.5"/>
-<text x="340" y="138" text-anchor="middle" font-size="13" font-weight="600" fill="#d8b4fe">API Gateway</text>
-<text x="340" y="154" text-anchor="middle" font-size="11" fill="#a78bfa">Node.js / Express — auth, routing, rate limiting</text>
-
-<!-- Arrows down to services -->
-<line x1="260" y1="166" x2="105" y2="224" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-<line x1="310" y1="166" x2="270" y2="224" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-<line x1="370" y1="166" x2="410" y2="224" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-<line x1="420" y1="166" x2="560" y2="224" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-
-<!-- Policy Service -->
-<rect x="30" y="224" width="140" height="56" rx="8" fill="#1f4487" stroke="#388bfd" stroke-width="0.5"/>
-<text x="100" y="246" text-anchor="middle" font-size="13" font-weight="600" fill="#93c5fd">Policy Service</text>
-<text x="100" y="262" text-anchor="middle" font-size="11" fill="#60a5fa">Weekly DIT premium</text>
-<text x="100" y="275" text-anchor="middle" font-size="11" fill="#60a5fa">calc + activation</text>
-
-<!-- Claims Engine -->
-<rect x="190" y="224" width="140" height="56" rx="8" fill="#1f4487" stroke="#388bfd" stroke-width="0.5"/>
-<text x="260" y="246" text-anchor="middle" font-size="13" font-weight="600" fill="#93c5fd">Claims Engine</text>
-<text x="260" y="262" text-anchor="middle" font-size="11" fill="#60a5fa">Trigger evaluation,</text>
-<text x="260" y="275" text-anchor="middle" font-size="11" fill="#60a5fa">payout orchestration</text>
-
-<!-- ML Services -->
-<rect x="350" y="224" width="140" height="56" rx="8" fill="#5a2000" stroke="#f0883e" stroke-width="0.5"/>
-<text x="420" y="244" text-anchor="middle" font-size="13" font-weight="600" fill="#fdba74">ML Services</text>
-<text x="420" y="260" text-anchor="middle" font-size="11" fill="#fb923c">DIT + Fraud + Zone</text>
-<text x="420" y="275" text-anchor="middle" font-size="11" fill="#fb923c">Risk + NLP (FastAPI)</text>
-
-<!-- Notifications -->
-<rect x="510" y="224" width="140" height="56" rx="8" fill="#1f4487" stroke="#388bfd" stroke-width="0.5"/>
-<text x="580" y="246" text-anchor="middle" font-size="13" font-weight="600" fill="#93c5fd">Notifications</text>
-<text x="580" y="262" text-anchor="middle" font-size="11" fill="#60a5fa">WhatsApp Business</text>
-<text x="580" y="275" text-anchor="middle" font-size="11" fill="#60a5fa">API + SMS</text>
-
-<!-- Arrows to Trigger Orchestrator -->
-<line x1="260" y1="280" x2="260" y2="336" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-<line x1="380" y1="280" x2="320" y2="336" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-
-<!-- Trigger Orchestrator -->
-<rect x="160" y="336" width="280" height="48" rx="8" fill="#3d1f00" stroke="#f0883e" stroke-width="0.5"/>
-<text x="300" y="356" text-anchor="middle" font-size="13" font-weight="600" fill="#fdba74">Trigger Orchestrator</text>
-<text x="300" y="372" text-anchor="middle" font-size="11" fill="#fb923c">Redis queue — 3-source validation engine</text>
-
-<!-- Arrows to DB -->
-<line x1="300" y1="384" x2="300" y2="430" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-<line x1="100" y1="280" x2="190" y2="430" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-<line x1="580" y1="280" x2="450" y2="430" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-
-<!-- PostgreSQL -->
-<rect x="120" y="430" width="360" height="48" rx="8" fill="#21262d" stroke="#444" stroke-width="0.5"/>
-<text x="300" y="450" text-anchor="middle" font-size="13" font-weight="600" fill="#c9d1d9">PostgreSQL + PostGIS</text>
-<text x="300" y="466" text-anchor="middle" font-size="11" fill="#8b949e">Workers · Policies · Claims · Audit Logs · Zone Polygons</text>
-
-<!-- Divider -->
-<line x1="40" y1="510" x2="640" y2="510" stroke="#30363d" stroke-width="0.5" stroke-dasharray="4 4"/>
-<text x="340" y="527" text-anchor="middle" font-size="11" fill="#8b949e">External Data Sources — Real-time Trigger Feeds</text>
-
-<!-- Green external APIs row 1 -->
-<rect x="30" y="538" width="110" height="44" rx="6" fill="#0d2818" stroke="#3fb950" stroke-width="0.5"/>
-<text x="85" y="556" text-anchor="middle" font-size="12" font-weight="600" fill="#7ee787">IMD Rainfall</text>
-<text x="85" y="570" text-anchor="middle" font-size="10" fill="#56d364">Primary weather</text>
-
-<rect x="155" y="538" width="110" height="44" rx="6" fill="#0d2818" stroke="#3fb950" stroke-width="0.5"/>
-<text x="210" y="556" text-anchor="middle" font-size="12" font-weight="600" fill="#7ee787">OpenWeather</text>
-<text x="210" y="570" text-anchor="middle" font-size="10" fill="#56d364">Backup weather</text>
-
-<rect x="280" y="538" width="110" height="44" rx="6" fill="#0d2818" stroke="#3fb950" stroke-width="0.5"/>
-<text x="335" y="556" text-anchor="middle" font-size="12" font-weight="600" fill="#7ee787">CPCB AQI</text>
-<text x="335" y="570" text-anchor="middle" font-size="10" fill="#56d364">Air quality</text>
-
-<rect x="405" y="538" width="110" height="44" rx="6" fill="#0d2818" stroke="#3fb950" stroke-width="0.5"/>
-<text x="460" y="556" text-anchor="middle" font-size="12" font-weight="600" fill="#7ee787">CWC Floods</text>
-<text x="460" y="570" text-anchor="middle" font-size="10" fill="#56d364">River levels</text>
-
-<rect x="530" y="538" width="110" height="44" rx="6" fill="#0d2818" stroke="#3fb950" stroke-width="0.5"/>
-<text x="585" y="556" text-anchor="middle" font-size="12" font-weight="600" fill="#7ee787">Twitter/X API</text>
-<text x="585" y="570" text-anchor="middle" font-size="10" fill="#56d364">NLP classifier</text>
-
-<!-- Pink platform + payment row -->
-<rect x="55" y="600" width="130" height="44" rx="6" fill="#1a0a1e" stroke="#d4537e" stroke-width="0.5"/>
-<text x="120" y="618" text-anchor="middle" font-size="12" font-weight="600" fill="#f0abcb">Zomato Partner</text>
-<text x="120" y="632" text-anchor="middle" font-size="10" fill="#ec4899">Income + activity</text>
-
-<rect x="205" y="600" width="130" height="44" rx="6" fill="#1a0a1e" stroke="#d4537e" stroke-width="0.5"/>
-<text x="270" y="618" text-anchor="middle" font-size="12" font-weight="600" fill="#f0abcb">Swiggy Partner</text>
-<text x="270" y="632" text-anchor="middle" font-size="10" fill="#ec4899">Income + activity</text>
-
-<rect x="355" y="600" width="130" height="44" rx="6" fill="#0f6e56" stroke="#1d9e75" stroke-width="0.5"/>
-<text x="420" y="618" text-anchor="middle" font-size="12" font-weight="600" fill="#9fe1cb">Razorpay UPI</text>
-<text x="420" y="632" text-anchor="middle" font-size="10" fill="#5dcaa5">AutoPay + Payout</text>
-
-<rect x="505" y="600" width="130" height="44" rx="6" fill="#0f6e56" stroke="#1d9e75" stroke-width="0.5"/>
-<text x="570" y="618" text-anchor="middle" font-size="12" font-weight="600" fill="#9fe1cb">Aadhaar KYC</text>
-<text x="570" y="632" text-anchor="middle" font-size="10" fill="#5dcaa5">Identity + fraud</text>
-
-<!-- Dashed arrows from external sources to Trigger Orchestrator -->
-<line x1="85" y1="538" x2="200" y2="384" stroke="#555" stroke-width="0.8" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
-<line x1="210" y1="538" x2="240" y2="384" stroke="#555" stroke-width="0.8" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
-<line x1="335" y1="538" x2="295" y2="384" stroke="#555" stroke-width="0.8" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
-<line x1="460" y1="538" x2="350" y2="384" stroke="#555" stroke-width="0.8" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
-<line x1="570" y1="538" x2="415" y2="280" stroke="#555" stroke-width="0.8" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
-<line x1="120" y1="600" x2="230" y2="280" stroke="#555" stroke-width="0.8" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
-<line x1="270" y1="600" x2="265" y2="280" stroke="#555" stroke-width="0.8" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
-
-<!-- 7-Layer Fraud badge -->
-<rect x="478" y="330" width="160" height="62" rx="8" fill="#490202" stroke="#f85149" stroke-width="0.5"/>
-<text x="558" y="350" text-anchor="middle" font-size="13" font-weight="600" fill="#fca5a5">7-Layer Fraud</text>
-<text x="558" y="366" text-anchor="middle" font-size="13" font-weight="600" fill="#fca5a5">Detection Engine</text>
-<text x="558" y="382" text-anchor="middle" font-size="10" fill="#f87171">GPS · Platform · Community</text>
-<line x1="440" y1="355" x2="478" y2="355" stroke="#888" stroke-width="1" marker-end="url(#arrow)"/>
-
-<!-- Legend -->
-<rect x="40" y="670" width="12" height="12" rx="2" fill="#0f6e56" stroke="#1d9e75" stroke-width="0.5"/>
-<text x="58" y="681" font-size="11" fill="#8b949e">User interfaces</text>
-<rect x="145" y="670" width="12" height="12" rx="2" fill="#1f4487" stroke="#388bfd" stroke-width="0.5"/>
-<text x="163" y="681" font-size="11" fill="#8b949e">Core services</text>
-<rect x="250" y="670" width="12" height="12" rx="2" fill="#5a2000" stroke="#f0883e" stroke-width="0.5"/>
-<text x="268" y="681" font-size="11" fill="#8b949e">ML engine</text>
-<rect x="340" y="670" width="12" height="12" rx="2" fill="#0d2818" stroke="#3fb950" stroke-width="0.5"/>
-<text x="358" y="681" font-size="11" fill="#8b949e">External feeds</text>
-<rect x="438" y="670" width="12" height="12" rx="2" fill="#3d1f00" stroke="#f0883e" stroke-width="0.5"/>
-<text x="456" y="681" font-size="11" fill="#8b949e">Trigger orchestrator</text>
-<rect x="562" y="670" width="12" height="12" rx="2" fill="#490202" stroke="#f85149" stroke-width="0.5"/>
-<text x="580" y="681" font-size="11" fill="#8b949e">Fraud engine</text>
-</svg>
+FRAUD ENGINE (7 Layers — runs inside Claims Engine)
+──────────────────────────────────────────────────────────────────
+   Layer 1 · GPS Zone Validation
+   Layer 2 · Platform Activity Cross-Check
+   Layer 3 · Community Consensus (15+ workers in zone)
+   Layer 4 · Historical Behavioral Baseline
+   Layer 5 · Duplicate Claim Prevention
+   Layer 6 · Earnings Continuity Audit
+   Layer 7 · Isolation Forest Real-Time Score (0–100)
 
 ### Technology Choices
 
