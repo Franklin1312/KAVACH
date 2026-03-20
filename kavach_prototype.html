@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAVACH — AI-Powered Income Shield</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #6e7681;
+  --teal: #39d353;
+  --teal2: #196c2e;
+  --blue: #388bfd;
+  --blue2: #1f4487;
+  --orange: #f0883e;
+  --orange2: #5a2000;
+  --red: #f85149;
+  --red2: #490202;
+  --purple: #bc8cff;
+  --purple2: #3b1f6b;
+  --amber: #e3b341;
+  --green: #3fb950;
+  --pill-bg: #21262d;
+  --r: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* NAV */
+nav {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--teal);
+  letter-spacing: -0.5px;
+}
+.logo span { color: var(--text); font-weight: 400; font-size: 13px; margin-left: 8px; }
+.nav-tabs { display: flex; gap: 4px; }
+.nav-tab {
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 13px;
+  border: none;
+  background: none;
+  transition: all 0.15s;
+}
+.nav-tab:hover { background: var(--bg3); color: var(--text); }
+.nav-tab.active { background: var(--bg3); color: var(--text); }
+.badge {
+  display: inline-block;
+  background: var(--teal2);
+  color: var(--teal);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* LAYOUT */
+main { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* HERO */
+.hero {
+  text-align: center;
+  padding: 48px 0 40px;
+}
+.hero h1 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+}
+.hero h1 span { color: var(--teal); }
+.hero p { color: var(--text2); max-width: 560px; margin: 0 auto 28px; font-size: 15px; line-height: 1.7; }
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 700px;
+  margin: 0 auto 32px;
+}
+.hero-stat {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px;
+}
+.hero-stat .num { font-size: 28px; font-weight: 700; color: var(--teal); }
+.hero-stat .label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+.btn {
+  display: inline-block;
+  padding: 10px 24px;
+  border-radius: var(--r);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.btn-primary { background: var(--teal); color: #000; }
+.btn-primary:hover { background: #2ea043; }
+.btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--text3); }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #da3633; }
+
+/* GRID CARDS */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px;
+}
+.card h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+.card .big { font-size: 28px; font-weight: 700; color: var(--text); }
+.card .sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+/* FORM CONTROLS */
+.field { margin-bottom: 16px; }
+.field label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--text2); }
+.field input, .field select {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+}
+.field input:focus, .field select:focus { outline: none; border-color: var(--blue); }
+input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--bg3); border: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--teal); cursor: pointer; }
+
+/* PREMIUM DISPLAY */
+.premium-box {
+  background: linear-gradient(135deg, var(--teal2) 0%, var(--bg2) 100%);
+  border: 1px solid var(--teal);
+  border-radius: var(--r);
+  padding: 24px;
+  text-align: center;
+  margin-top: 20px;
+}
+.premium-box .amount { font-size: 48px; font-weight: 700; color: var(--teal); }
+.premium-box .label { color: var(--text2); font-size: 13px; margin-top: 4px; }
+.premium-breakdown { margin-top: 16px; text-align: left; }
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.breakdown-row:last-child { border-bottom: none; font-weight: 600; }
+.breakdown-row .dim { color: var(--text2); }
+.coverage-bar { margin-top: 12px; }
+.coverage-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.bar { height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--teal); border-radius: 4px; transition: width 0.3s; }
+
+/* TIER SELECTOR */
+.tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.tier-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.tier-card:hover { border-color: var(--text3); }
+.tier-card.selected { border-color: var(--teal); background: var(--teal2); }
+.tier-card .pct { font-size: 22px; font-weight: 700; }
+.tier-card .name { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* DISRUPTION SIMULATOR */
+.trigger-list { display: grid; gap: 12px; }
+.trigger-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.trigger-card:hover { border-color: var(--text3); background: var(--bg3); }
+.trigger-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.icon-rain { background: #0c2a4a; }
+.icon-aqi { background: #2e1b00; }
+.icon-curfew { background: #1a0a2e; }
+.icon-outage { background: #1a0a0a; }
+.icon-heat { background: #2e1200; }
+.trigger-info .name { font-weight: 600; font-size: 15px; }
+.trigger-info .desc { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.trigger-info .threshold { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.trigger-badge { margin-left: auto; }
+.status-pill {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.pill-safe { background: var(--teal2); color: var(--teal); }
+.pill-warn { background: #2e1b00; color: var(--amber); }
+.pill-danger { background: var(--red2); color: var(--red); }
+.pill-active { background: var(--purple2); color: var(--purple); }
+
+/* SIMULATION PANEL */
+.sim-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 24px;
+  display: none;
+  margin-top: 20px;
+}
+.sim-panel.show { display: block; }
+.sim-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.3s;
+}
+.sim-step.visible { opacity: 1; transform: translateY(0); }
+.sim-step:last-child { border-bottom: none; }
+.step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.dot-pending { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
+.dot-ok { background: var(--teal2); color: var(--teal); }
+.dot-warn { background: #2e1b00; color: var(--amber); }
+.dot-info { background: var(--blue2); color: var(--blue); }
+.dot-payout { background: var(--purple2); color: var(--purple); }
+.step-content .title { font-weight: 600; font-size: 14px; }
+.step-content .detail { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.6; }
+.payout-final {
+  background: linear-gradient(135deg, var(--purple2), var(--bg2));
+  border: 1px solid var(--purple);
+  border-radius: var(--r);
+  padding: 20px;
+  text-align: center;
+  margin-top: 16px;
+  display: none;
+}
+.payout-final .amount { font-size: 40px; font-weight: 700; color: var(--purple); }
+.payout-final .label { color: var(--text2); font-size: 13px; }
+
+/* ANALYTICS DASHBOARD */
+.metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.metric-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+}
+.metric-card .val { font-size: 24px; font-weight: 700; }
+.metric-card .lbl { font-size: 11px; color: var(--text2); margin-top: 4px; }
+.metric-card .chg { font-size: 11px; margin-top: 6px; }
+.up { color: var(--green); }
+.down { color: var(--red); }
+.chart-container { position: relative; height: 180px; background: var(--bg3); border-radius: 8px; margin-top: 12px; overflow: hidden; }
+.chart-bar {
+  position: absolute;
+  bottom: 0;
+  background: var(--teal);
+  border-radius: 4px 4px 0 0;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+.chart-bar:hover { opacity: 1; }
+.chart-label { position: absolute; bottom: -18px; font-size: 10px; color: var(--text3); text-align: center; }
+.risk-map { background: var(--bg3); border-radius: 8px; padding: 16px; position: relative; height: 200px; }
+.zone-dot {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.zone-low { background: rgba(57, 211, 83, 0.3); border: 1px solid var(--teal); color: var(--teal); }
+.zone-med { background: rgba(227, 179, 65, 0.3); border: 1px solid var(--amber); color: var(--amber); }
+.zone-high { background: rgba(248, 81, 73, 0.3); border: 1px solid var(--red); color: var(--red); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; font-size: 11px; color: var(--text2); border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+
+/* FRAUD METER */
+.fraud-meter { margin-top: 12px; }
+.fraud-bar-outer { height: 10px; background: var(--bg3); border-radius: 5px; overflow: hidden; margin: 6px 0; }
+.fraud-bar-inner {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s, background 0.5s;
+}
+.fraud-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); }
+.score-badge { font-size: 28px; font-weight: 700; }
+
+/* ONBOARDING STEPS */
+.steps { display: flex; gap: 6px; margin-bottom: 28px; }
+.step-pill {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg3);
+  transition: background 0.3s;
+}
+.step-pill.done { background: var(--teal); }
+.step-pill.active { background: var(--blue); }
+
+/* RESPONSIVE */
+@media(max-width: 640px) {
+  .grid-2 { grid-template-columns: 1fr; }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero h1 { font-size: 26px; }
+  .hero-stats { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">⛨ KAVACH <span>AI Income Shield for Gig Workers</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home')">Home</button>
+    <button class="nav-tab" onclick="showPage('onboard')">Onboard<span class="badge">Demo</span></button>
+    <button class="nav-tab" onclick="showPage('premium')">Premium Calc</button>
+    <button class="nav-tab" onclick="showPage('simulator')">Disruption Sim<span class="badge">Live</span></button>
+    <button class="nav-tab" onclick="showPage('dashboard')">Analytics</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════ HOME ═══════════════════════ -->
+<div id="home" class="page active">
+  <div class="hero">
+    <h1>Protect What You Earn.<br><span>Not What's Already Lost.</span></h1>
+    <p>KAVACH is the world's first parametric income insurance that pays exactly what each gig worker lost — not a flat estimate — using a personalized <strong>Digital Income Twin</strong>.</p>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="num">12M+</div>
+        <div class="label">Gig delivery workers in India with zero income safety net</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">₹58</div>
+        <div class="label">Average weekly premium protecting up to ₹4,200 in earnings</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">&lt;12 min</div>
+        <div class="label">Automated claim-to-UPI payout time, zero paperwork</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="showPage('onboard')" style="margin-right:10px">Try Demo Onboarding →</button>
+    <button class="btn btn-secondary" onclick="showPage('simulator')">Simulate a Disruption</button>
+  </div>
+
+  <div class="grid-2" style="margin-top:0">
+    <div class="card">
+      <h3>The Core Innovation</h3>
+      <p style="color:var(--text2);font-size:13px;line-height:1.7">KAVACH builds a <strong style="color:var(--text)">Digital Income Twin (DIT)</strong> for each worker — an AI model trained on their personal earning patterns across time, zone, platform, and season. When a disruption triggers, DIT predicts exactly what they would have earned in that window. Payout = 70% of that predicted loss. Not ₹500 flat for everyone.</p>
+      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;font-size:12px"><div style="color:var(--red);margin-bottom:3px">✗ Basic parametric</div>Ravi: ₹500 flat<br>Priya (off-day): ₹500 flat</div>
+        <div style="background:var(--teal2);border:1px solid var(--teal);border-radius:6px;padding:10px;font-size:12px"><div style="color:var(--teal);margin-bottom:3px">✓ KAVACH DIT</div>Ravi: ₹280 (actual)<br>Priya (off-day): ₹0 (correct)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>7-Layer Fraud Shield</h3>
+      <div style="display:grid;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--teal);font-size:16px">◈</span><span><strong>GPS Zone Validation</strong><br><span style="color:var(--text2);font-size:11px">Worker must be confirmed inside disruption zone</span></span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--blue);font-size:16px">◈</span><span><strong>Platform Activity Cross-Check</strong><br><span style="color:var(--text2);font-size:11px">Zero orders from Zomato/Swiggy API must confirm idle state</span></span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--purple);font-size:16px">◈</span><span><strong>Community Consensus</strong><br><span style="color:var(--text2);font-size:11px">15+ workers in zone must show identical idle pattern</span></span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;padding:6px 0"><span style="color:var(--amber);font-size:16px">◈</span><span><strong>Behavioral Baseline + 4 more layers</strong><br><span style="color:var(--text2);font-size:11px">Historical patterns, duplicate prevention, earnings audit</span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <h3>3-Source Trigger Validation — No Single Point of Failure</h3>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:4px">
+      <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:8px;font-size:12px"><div style="font-size:22px;margin-bottom:6px">🌧</div><strong>IMD Rainfall</strong><div style="color:var(--text2);margin-top:3px">&gt;35mm/3hr</div></div>
+      <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:8px;font-size:12px"><div style="font-size:22px;margin-bottom:6px">💨</div><strong>CPCB AQI</strong><div style="color:var(--text2);margin-top:3px">&gt;400 severe</div></div>
+      <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:8px;font-size:12px"><div style="font-size:22px;margin-bottom:6px">🌊</div><strong>CWC Floods</strong><div style="color:var(--text2);margin-top:3px">RED alert</div></div>
+      <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:8px;font-size:12px"><div style="font-size:22px;margin-bottom:6px">🚫</div><strong>Civil Alert</strong><div style="color:var(--text2);margin-top:3px">Curfew/bandh</div></div>
+      <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:8px;font-size:12px"><div style="font-size:22px;margin-bottom:6px">📱</div><strong>Platform Down</strong><div style="color:var(--text2);margin-top:3px">p95 &gt;8s / 15min</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ONBOARDING ═══════════════════════ -->
+<div id="onboard" class="page">
+  <h2 style="margin-bottom:8px">Worker Onboarding</h2>
+  <p style="color:var(--text2);margin-bottom:24px">Estimated time: 3 minutes. KYC uses Aadhaar API sandbox.</p>
+
+  <div class="steps">
+    <div class="step-pill done" id="sp1"></div>
+    <div class="step-pill active" id="sp2"></div>
+    <div class="step-pill" id="sp3"></div>
+    <div class="step-pill" id="sp4"></div>
+    <div class="step-pill" id="sp5"></div>
+  </div>
+
+  <div id="ob-step" style="max-width:520px">
+
+    <!-- Step 1 content shown inline as "already done" pre-fill -->
+    <div id="ob1" class="card" style="display:none">
+      <h3>Step 1 — Identity Verification</h3>
+      <div class="field"><label>Mobile Number</label><input type="tel" placeholder="+91 98765 43210" id="ob-phone"/></div>
+      <div class="field"><label>Aadhaar Number (Sandbox)</label><input type="text" placeholder="XXXX XXXX XXXX" id="ob-aadhaar"/></div>
+      <button class="btn btn-primary" onclick="obNext(2)">Verify & Continue →</button>
+    </div>
+
+    <div id="ob2" class="card">
+      <h3>Step 2 — Platform & Zone</h3>
+      <div class="field">
+        <label>Delivery Platform(s)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">
+          <label style="cursor:pointer"><div id="plat-z" onclick="togglePlat('z')" style="border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center;transition:all 0.15s"><div style="font-size:18px">🍴</div><div style="font-size:12px;margin-top:3px">Zomato</div></div></label>
+          <label style="cursor:pointer"><div id="plat-s" onclick="togglePlat('s')" style="border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center;transition:all 0.15s"><div style="font-size:18px">🛵</div><div style="font-size:12px;margin-top:3px">Swiggy</div></div></label>
+          <label style="cursor:pointer"><div id="plat-b" onclick="togglePlat('b')" style="border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center;transition:all 0.15s"><div style="font-size:18px">⚡</div><div style="font-size:12px;margin-top:3px">Blinkit</div></div></label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Primary Delivery City</label>
+        <select id="ob-city">
+          <option value="chennai">Chennai</option>
+          <option value="mumbai">Mumbai</option>
+          <option value="delhi">Delhi</option>
+          <option value="bengaluru">Bengaluru</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Primary Operating Zone</label>
+        <select id="ob-zone">
+          <option value="anna_nagar">Anna Nagar (Moderate Risk)</option>
+          <option value="marina">Marina / Adyar (High Risk — Coastal)</option>
+          <option value="t_nagar">T. Nagar (Moderate Risk)</option>
+          <option value="tambaram">Tambaram (Low Risk — Elevated)</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="obNext(3)">Continue →</button>
+    </div>
+
+    <div id="ob3" class="card" style="display:none">
+      <h3>Step 3 — Income Verification</h3>
+      <p style="color:var(--text2);font-size:12px;margin-bottom:16px">Your Digital Income Twin is built from your platform data. We cross-verify your declaration with Zomato/Swiggy partner earnings (API sync).</p>
+      <div class="field">
+        <label>Approximate Weekly Earnings (₹)</label>
+        <input type="number" id="ob-income" value="5800" min="1500" max="15000"/>
+      </div>
+      <div class="field">
+        <label>Typical Working Hours</label>
+        <select id="ob-hours">
+          <option value="part">Part-time (4–6 hrs/day)</option>
+          <option value="full" selected>Full-time (8–12 hrs/day)</option>
+          <option value="extended">Extended (12–16 hrs/day)</option>
+        </select>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;font-size:12px;color:var(--text2)">
+        📊 Platform API sync will auto-verify earnings within 24hrs. Your premium may be adjusted at next weekly cycle if discrepancy &gt;20%.
+      </div>
+      <div style="margin-top:16px"><button class="btn btn-primary" onclick="obNext(4)">Continue →</button></div>
+    </div>
+
+    <div id="ob4" class="card" style="display:none">
+      <h3>Step 4 — Choose Coverage Tier</h3>
+      <div class="tier-grid">
+        <div class="tier-card" onclick="selectTier(0.5,this)">
+          <div class="pct">50%</div>
+          <div class="name">Basic</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">0.7× rate</div>
+        </div>
+        <div class="tier-card selected" onclick="selectTier(0.7,this)">
+          <div class="pct" style="color:var(--teal)">70%</div>
+          <div class="name" style="color:var(--teal)">Standard ★</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">1.0× rate</div>
+        </div>
+        <div class="tier-card" onclick="selectTier(0.85,this)">
+          <div class="pct">85%</div>
+          <div class="name">Premium</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">1.35× rate</div>
+        </div>
+      </div>
+      <div id="ob4-premium" style="background:var(--bg3);border-radius:8px;padding:16px;text-align:center">
+        <div style="font-size:32px;font-weight:700;color:var(--teal)">₹<span id="ob4-amt">58</span></div>
+        <div style="font-size:12px;color:var(--text2)">per week · UPI AutoPay every Monday</div>
+        <div style="font-size:13px;margin-top:8px">Coverage: up to <strong style="color:var(--teal)">₹<span id="ob4-cov">4,060</span></strong> income protected</div>
+      </div>
+      <div style="margin-top:16px"><button class="btn btn-primary" onclick="obNext(5)">Activate Policy →</button></div>
+    </div>
+
+    <div id="ob5" class="card" style="display:none;text-align:center">
+      <div style="font-size:64px;margin:8px 0">🎉</div>
+      <h2 style="color:var(--teal);margin-bottom:8px">Policy Activated!</h2>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:20px">Your KAVACH income shield is now live. You're protected until Sunday 11:59 PM.</p>
+      <div style="background:var(--bg3);border-radius:8px;padding:16px;text-align:left;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Policy ID</span><strong>KVH-2026-0834921</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Coverage</span><strong style="color:var(--teal)">Standard 70%</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Max payout this week</span><strong>₹4,060</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Weekly premium</span><strong>₹58</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--text2)">Policy expires</span><strong>Sunday 11:59 PM</strong></div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-secondary" onclick="showPage('simulator')">Simulate a Disruption →</button>
+        <button class="btn btn-secondary" onclick="obNext(2);document.getElementById('sp1').className='step-pill done';document.getElementById('sp2').className='step-pill active';">Reset Demo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PREMIUM CALCULATOR ═══════════════════════ -->
+<div id="premium" class="page">
+  <h2 style="margin-bottom:8px">Weekly Premium Calculator</h2>
+  <p style="color:var(--text2);margin-bottom:24px">Explore how KAVACH's AI pricing engine works. All values are dynamic — adjust any parameter to see instant recalculation.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Your Parameters</h3>
+      <div class="field">
+        <label>Weekly Income (₹) — <span id="lbl-income">5,800</span></label>
+        <input type="range" min="2000" max="12000" step="100" value="5800" oninput="calcPremium()">
+      </div>
+      <div class="field">
+        <label>Zone Risk Factor — <span id="lbl-zone">Moderate (1.00×)</span></label>
+        <select onchange="setZone(this.value)">
+          <option value="0.85">Low Risk — Inland / Elevated (0.85×)</option>
+          <option value="1.0" selected>Moderate Risk — Urban core (1.00×)</option>
+          <option value="1.3">High Risk — Coastal / Riverine (1.30×)</option>
+          <option value="1.55">Extreme Risk — Flood-prone low-lying (1.55×)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Season Risk — <span id="lbl-season">NE Monsoon (1.45×)</span></label>
+        <select onchange="setSeason(this.value)">
+          <option value="0.80">Dry season (0.80×)</option>
+          <option value="1.20">Winter smog — Delhi (1.20×)</option>
+          <option value="1.45" selected>NE Monsoon — Chennai (1.45×)</option>
+          <option value="1.55">SW Monsoon — Mumbai (1.55×)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Claims-Free Weeks — <span id="lbl-cfb">8 weeks (−15%)</span></label>
+        <input type="range" min="0" max="12" step="1" value="8" oninput="setCFB(this.value)">
+      </div>
+      <div class="field">
+        <label>Surge Risk Loading — <span id="lbl-surge">₹8 (cyclone warning)</span></label>
+        <input type="range" min="0" max="20" step="1" value="8" oninput="setSurge(this.value)">
+      </div>
+      <div class="field">
+        <label>Coverage Tier</label>
+        <div class="tier-grid">
+          <div class="tier-card" onclick="setTierCalc(0.5,0.7,this)"><div class="pct">50%</div><div class="name">Basic 0.7×</div></div>
+          <div class="tier-card selected" onclick="setTierCalc(0.7,1.0,this)"><div class="pct" style="color:var(--teal)">70%</div><div class="name" style="color:var(--teal)">Standard</div></div>
+          <div class="tier-card" onclick="setTierCalc(0.85,1.35,this)"><div class="pct">85%</div><div class="name">Premium 1.35×</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="premium-box">
+        <div class="amount">₹<span id="final-premium">65</span></div>
+        <div class="label">per week · auto-debited every Monday</div>
+        <div class="premium-breakdown">
+          <div class="breakdown-row"><span class="dim">Base rate (<span id="br-rate">0.75</span>% of income)</span><span>₹<span id="br-base">43.50</span></span></div>
+          <div class="breakdown-row"><span class="dim">Zone risk factor (<span id="br-zone">1.00</span>×)</span><span>₹<span id="br-zone-amt">43.50</span></span></div>
+          <div class="breakdown-row"><span class="dim">Season multiplier (<span id="br-season">1.45</span>×)</span><span>₹<span id="br-season-amt">63.08</span></span></div>
+          <div class="breakdown-row"><span class="dim">Claims-free discount</span><span style="color:var(--teal)">−₹<span id="br-cfb">9.46</span></span></div>
+          <div class="breakdown-row"><span class="dim">Surge loading</span><span style="color:var(--orange)">+₹<span id="br-surge">8.00</span></span></div>
+          <div class="breakdown-row"><span class="dim">Tier multiplier (<span id="br-tier">1.00</span>×)</span><span>—</span></div>
+          <div class="breakdown-row"><span>Total weekly premium</span><span style="color:var(--teal)">₹<span id="br-total">62</span></span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h3>Coverage Summary</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div><div style="font-size:22px;font-weight:700;color:var(--teal)">₹<span id="cs-cov">4,060</span></div><div style="font-size:11px;color:var(--text2)">Max payout (70% of income)</div></div>
+          <div><div style="font-size:22px;font-weight:700">×<span id="cs-ratio">66</span></div><div style="font-size:11px;color:var(--text2)">Value ratio (coverage ÷ premium)</div></div>
+        </div>
+        <div class="coverage-bar">
+          <div class="coverage-label"><span>0</span><span style="color:var(--teal)">Coverage limit</span><span>₹<span id="cov-max">4,060</span></span></div>
+          <div class="bar"><div class="bar-fill" id="cov-bar" style="width:70%"></div></div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text2);line-height:1.7">
+          For ₹<span id="cs-p">65</span>/week, you protect ₹<span id="cs-c">4,060</span> of income. Even one disruption day that would have cost ₹<span id="cs-day">828</span> in lost wages pays back the entire week's premium <strong style="color:var(--text)"><span id="cs-mult">12.7</span>×</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DISRUPTION SIMULATOR ═══════════════════════ -->
+<div id="simulator" class="page">
+  <h2 style="margin-bottom:8px">Live Disruption Simulator</h2>
+  <p style="color:var(--text2);margin-bottom:24px">Select a disruption type to simulate the full KAVACH automated pipeline — from trigger detection to UPI payout. All in under 12 minutes.</p>
+
+  <div class="trigger-list">
+    <div class="trigger-card" onclick="simulate('rain')">
+      <div class="trigger-icon icon-rain">🌧</div>
+      <div class="trigger-info">
+        <div class="name">Heavy Rainfall Event — Chennai</div>
+        <div class="desc">Ravi | Anna Nagar zone | Tuesday 7:00 PM | Zomato partner</div>
+        <div class="threshold">Threshold: &gt;35mm / 3hr | Sources: IMD + OpenWeather + Twitter geo</div>
+      </div>
+      <div class="trigger-badge"><span class="status-pill pill-danger">TRIGGER ACTIVE</span></div>
+    </div>
+    <div class="trigger-card" onclick="simulate('aqi')">
+      <div class="trigger-icon icon-aqi">💨</div>
+      <div class="trigger-info">
+        <div class="name">Severe AQI Spike — Delhi</div>
+        <div class="desc">Priya | Connaught Place zone | Monday 10:00 AM | Swiggy partner</div>
+        <div class="threshold">Threshold: AQI &gt;400 (Severe) | Sources: CPCB + AirVisual + WHO alert</div>
+      </div>
+      <div class="trigger-badge"><span class="status-pill pill-warn">MONITORING</span></div>
+    </div>
+    <div class="trigger-card" onclick="simulate('curfew')">
+      <div class="trigger-icon icon-curfew">🚫</div>
+      <div class="trigger-info">
+        <div class="name">Unplanned District Curfew — Bengaluru</div>
+        <div class="desc">Suresh | MG Road zone | Thursday 8:00 AM | Zomato + Swiggy</div>
+        <div class="threshold">Sources: Karnataka Police API + PIB + Downdetector social spike</div>
+      </div>
+      <div class="trigger-badge"><span class="status-pill pill-safe">CLEAR</span></div>
+    </div>
+    <div class="trigger-card" onclick="simulate('outage')">
+      <div class="trigger-icon icon-outage">📵</div>
+      <div class="trigger-info">
+        <div class="name">Platform Outage — Swiggy Backend</div>
+        <div class="desc">Priya | Delhi | Friday 1:00 PM | p95 latency exceeded 15min threshold</div>
+        <div class="threshold">Sources: Heartbeat API + Downdetector score &gt;500 + Twitter volume</div>
+      </div>
+      <div class="trigger-badge"><span class="status-pill pill-active">PROCESSING</span></div>
+    </div>
+  </div>
+
+  <div id="sim-panel" class="sim-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="color:var(--text);font-size:15px" id="sim-title">Simulating...</h3>
+      <button class="btn btn-secondary" style="font-size:12px;padding:5px 12px" onclick="resetSim()">Reset</button>
+    </div>
+    <div id="sim-steps"></div>
+    <div class="payout-final" id="payout-final">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">💸 UPI Transfer Complete</div>
+      <div class="amount">₹<span id="payout-amt">196</span></div>
+      <div class="label">Income protection payout · <span id="payout-worker">Ravi</span> · <span id="payout-upi">UPI: ravi@ybl</span></div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text2)">
+        WhatsApp sent ✓ · Policy dashboard updated ✓ · Audit log recorded ✓
+      </div>
+      <div style="margin-top:16px"><button class="btn btn-primary" onclick="showPage('dashboard')">View Analytics Dashboard →</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ANALYTICS ═══════════════════════ -->
+<div id="dashboard" class="page">
+  <h2 style="margin-bottom:8px">Insurer Analytics Dashboard</h2>
+  <p style="color:var(--text2);margin-bottom:24px">Real-time view for insurers — loss ratios, zone risk, predictive disruption forecast, and fraud metrics.</p>
+
+  <div class="metrics-grid">
+    <div class="metric-card"><div class="val" style="color:var(--teal)">18,432</div><div class="lbl">Active policies this week</div><div class="chg up">↑ 12% vs last week</div></div>
+    <div class="metric-card"><div class="val">₹10.7L</div><div class="lbl">Premiums collected (MTD)</div><div class="chg up">↑ 8% vs last month</div></div>
+    <div class="metric-card"><div class="val" style="color:var(--amber)">₹8.9L</div><div class="lbl">Claims paid (MTD)</div><div class="chg" style="color:var(--text2)">Loss ratio: 83.2%</div></div>
+    <div class="metric-card"><div class="val" style="color:var(--green)">94.3%</div><div class="lbl">Fraud detection accuracy</div><div class="chg down">↓ 3 false-positives this week</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Weekly Claim Volume (last 8 weeks)</h3>
+      <div class="chart-container" style="padding:0 10px;margin-top:10px">
+        <div class="chart-bar" style="left:4%;width:10%;height:30%"></div>
+        <div class="chart-bar" style="left:16%;width:10%;height:18%"></div>
+        <div class="chart-bar" style="left:28%;width:10%;height:25%"></div>
+        <div class="chart-bar" style="left:40%;width:10%;height:70%;background:var(--amber)"></div>
+        <div class="chart-bar" style="left:52%;width:10%;height:85%;background:var(--red);opacity:0.9"></div>
+        <div class="chart-bar" style="left:64%;width:10%;height:55%;background:var(--amber)"></div>
+        <div class="chart-bar" style="left:76%;width:10%;height:32%"></div>
+        <div class="chart-bar" style="left:88%;width:10%;height:20%"></div>
+        <div class="chart-label" style="left:4%;width:12%;bottom:-18px">W1</div>
+        <div class="chart-label" style="left:16%;width:12%;bottom:-18px">W2</div>
+        <div class="chart-label" style="left:28%;width:12%;bottom:-18px">W3</div>
+        <div class="chart-label" style="left:40%;width:12%;bottom:-18px;color:var(--amber)">W4</div>
+        <div class="chart-label" style="left:52%;width:12%;bottom:-18px;color:var(--red)">W5 🌧</div>
+        <div class="chart-label" style="left:64%;width:12%;bottom:-18px">W6</div>
+        <div class="chart-label" style="left:76%;width:12%;bottom:-18px">W7</div>
+        <div class="chart-label" style="left:88%;width:12%;bottom:-18px">W8</div>
+      </div>
+      <div style="margin-top:24px;font-size:12px;color:var(--text2)">W5 spike = Northeast monsoon event. 3,241 claims auto-processed in 18 minutes. Loss ratio that week: 91.4%.</div>
+    </div>
+
+    <div class="card">
+      <h3>Chennai Zone Risk Map (Simulated)</h3>
+      <div class="risk-map">
+        <div class="zone-dot zone-high" style="width:56px;height:56px;left:35%;top:25%">Marina<br>High</div>
+        <div class="zone-dot zone-med" style="width:50px;height:50px;left:28%;top:45%">Anna N<br>Med</div>
+        <div class="zone-dot zone-med" style="width:50px;height:50px;left:55%;top:40%">T. Nagar<br>Med</div>
+        <div class="zone-dot zone-low" style="width:46px;height:46px;left:20%;top:68%">Tambaram<br>Low</div>
+        <div class="zone-dot zone-low" style="width:46px;height:46px;left:62%;top:65%">Velachery<br>Low</div>
+        <div class="zone-dot zone-high" style="width:48px;height:48px;left:70%;top:25%">Adyar<br>High</div>
+        <div style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--text3);display:flex;gap:8px">
+          <span style="color:var(--teal)">● Low</span>
+          <span style="color:var(--amber)">● Med</span>
+          <span style="color:var(--red)">● High</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <h3>Recent Automated Claims</h3>
+    <table>
+      <tr><th>Worker ID</th><th>Zone</th><th>Trigger</th><th>Predicted Loss</th><th>Payout</th><th>Fraud Score</th><th>Status</th></tr>
+      <tr><td>KVH-0834921</td><td>Anna Nagar</td><td>Rain &gt;45mm</td><td>₹280</td><td>₹196</td><td><span style="color:var(--teal)">12/100</span></td><td><span class="status-pill pill-safe">PAID</span></td></tr>
+      <tr><td>KVH-0291048</td><td>Marina Beach</td><td>Flood alert RED</td><td>₹510</td><td>₹357</td><td><span style="color:var(--teal)">8/100</span></td><td><span class="status-pill pill-safe">PAID</span></td></tr>
+      <tr><td>KVH-0983741</td><td>Adyar</td><td>Rain &gt;45mm</td><td>₹190</td><td>₹133</td><td><span style="color:var(--amber)">54/100</span></td><td><span class="status-pill pill-warn">REVIEWING</span></td></tr>
+      <tr><td>KVH-0011203</td><td>T. Nagar</td><td>Rain &gt;45mm</td><td>₹0</td><td>₹0</td><td><span style="color:var(--red)">82/100</span></td><td><span class="status-pill pill-danger">REJECTED</span></td></tr>
+      <tr><td>KVH-0573920</td><td>Anna Nagar</td><td>Rain &gt;45mm</td><td>₹310</td><td>₹217</td><td><span style="color:var(--teal)">19/100</span></td><td><span class="status-pill pill-safe">PAID</span></td></tr>
+    </table>
+    <div style="margin-top:12px;font-size:12px;color:var(--text2)">
+      Worker KVH-0011203 rejected: GPS spoofing detected (coordinate jitter score 0.003 vs normal 0.18). Worker KVH-0983741 held: first-week policy, cooling-off review in progress.
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <h3>Predictive Disruption Forecast — Next 7 Days</h3>
+    <div style="display:grid;gap:8px">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg3);border-radius:6px">
+        <div style="width:60px;font-size:12px;color:var(--text2)">Tomorrow</div>
+        <div class="bar" style="flex:1;height:12px"><div class="bar-fill" style="width:22%;background:var(--teal)"></div></div>
+        <div style="font-size:12px;width:60px;text-align:right;color:var(--teal)">22% risk</div>
+        <div style="font-size:11px;color:var(--text2);width:80px">Est. ₹18K claims</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg3);border-radius:6px">
+        <div style="width:60px;font-size:12px;color:var(--text2)">Day 3</div>
+        <div class="bar" style="flex:1;height:12px"><div class="bar-fill" style="width:65%;background:var(--amber)"></div></div>
+        <div style="font-size:12px;width:60px;text-align:right;color:var(--amber)">65% risk</div>
+        <div style="font-size:11px;color:var(--text2);width:80px">Est. ₹52K claims</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--red2);border-radius:6px;border:1px solid var(--red)">
+        <div style="width:60px;font-size:12px;color:var(--text2)">Day 4</div>
+        <div class="bar" style="flex:1;height:12px"><div class="bar-fill" style="width:88%;background:var(--red)"></div></div>
+        <div style="font-size:12px;width:60px;text-align:right;color:var(--red)">88% risk</div>
+        <div style="font-size:11px;color:var(--text2);width:80px">Est. ₹1.1L claims</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg3);border-radius:6px">
+        <div style="width:60px;font-size:12px;color:var(--text2)">Day 5–7</div>
+        <div class="bar" style="flex:1;height:12px"><div class="bar-fill" style="width:15%;background:var(--teal)"></div></div>
+        <div style="font-size:12px;width:60px;text-align:right;color:var(--teal)">15% risk</div>
+        <div style="font-size:11px;color:var(--text2);width:80px">Est. ₹12K claims</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text2)">⚠ Day 4 surge loading of +₹14 applied to new policies. Reinsurance reserve pre-alert sent to HDFC Ergo at Day 4 &gt;80% probability.</div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// PAGE NAVIGATION
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = {home:0, onboard:1, premium:2, simulator:3, dashboard:4};
+  if(map[id] !== undefined) tabs[map[id]].classList.add('active');
+}
+
+// ONBOARDING
+let currentStep = 2;
+const platSelected = {z: false, s: false, b: false};
+let tierMult = 1.0, tierPct = 0.7;
+
+function togglePlat(p) {
+  platSelected[p] = !platSelected[p];
+  const el = document.getElementById('plat-' + p);
+  el.style.borderColor = platSelected[p] ? 'var(--teal)' : 'var(--border)';
+  el.style.background = platSelected[p] ? 'var(--teal2)' : '';
+}
+
+function obNext(step) {
+  document.getElementById('ob' + currentStep).style.display = 'none';
+  currentStep = step;
+  document.getElementById('ob' + step).style.display = 'block';
+  for(let i=1;i<=5;i++) {
+    const pill = document.getElementById('sp'+i);
+    if(i < step) pill.className = 'step-pill done';
+    else if(i === step) pill.className = 'step-pill active';
+    else pill.className = 'step-pill';
+  }
+}
+
+function selectTier(pct, el) {
+  document.querySelectorAll('#ob4 .tier-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  tierPct = pct;
+  tierMult = pct === 0.5 ? 0.7 : pct === 0.7 ? 1.0 : 1.35;
+  const inc = parseInt(document.getElementById('ob-income')?.value || 5800);
+  const base = inc * 0.0078;
+  const total = Math.round(base * 1.45 * 0.85 * tierMult + 8);
+  const cov = Math.round(inc * pct);
+  document.getElementById('ob4-amt').textContent = total;
+  document.getElementById('ob4-cov').textContent = cov.toLocaleString('en-IN');
+}
+
+// PREMIUM CALCULATOR
+let cZone = 1.0, cSeason = 1.45, cCFB = 8, cSurge = 8, cTierMult = 1.0, cTierPct = 0.7;
+
+function setZone(v) {
+  cZone = parseFloat(v);
+  const labels = {'0.85':'Low Risk (0.85×)','1.0':'Moderate (1.00×)','1.3':'High Risk (1.30×)','1.55':'Extreme Risk (1.55×)'};
+  document.getElementById('lbl-zone').textContent = labels[v] || v + '×';
+  calcPremium();
+}
+function setSeason(v) {
+  cSeason = parseFloat(v);
+  const labels = {'0.80':'Dry season (0.80×)','1.20':'Winter smog (1.20×)','1.45':'NE Monsoon (1.45×)','1.55':'SW Monsoon (1.55×)'};
+  document.getElementById('lbl-season').textContent = labels[v];
+  calcPremium();
+}
+function setCFB(v) {
+  cCFB = parseInt(v);
+  const disc = v >= 8 ? 15 : v >= 4 ? 8 : 0;
+  document.getElementById('lbl-cfb').textContent = v + ' weeks (−' + disc + '%)';
+  calcPremium();
+}
+function setSurge(v) {
+  cSurge = parseInt(v);
+  document.getElementById('lbl-surge').textContent = '₹' + v + (v > 14 ? ' (high risk loading)' : v > 6 ? ' (cyclone warning)' : ' (minimal)');
+  calcPremium();
+}
+function setTierCalc(pct, mult, el) {
+  cTierPct = pct; cTierMult = mult;
+  document.querySelectorAll('#premium .tier-card').forEach(c => { c.classList.remove('selected'); c.querySelector('.pct').style.color=''; c.querySelector('.name').style.color=''; });
+  el.classList.add('selected');
+  el.querySelector('.pct').style.color = 'var(--teal)';
+  el.querySelector('.name').style.color = 'var(--teal)';
+  calcPremium();
+}
+
+function calcPremium() {
+  const slider = document.querySelector('#premium input[type=range]:first-of-type');
+  const income = parseInt(slider ? slider.value : 5800);
+  document.getElementById('lbl-income').textContent = income.toLocaleString('en-IN');
+
+  const rate = income > 8000 ? 0.70 : income > 5500 ? 0.75 : income > 3500 ? 0.80 : 0.85;
+  const base = income * rate / 100;
+  const afterZone = base * cZone;
+  const afterSeason = afterZone * cSeason;
+  const discPct = cCFB >= 8 ? 0.15 : cCFB >= 4 ? 0.08 : 0;
+  const discAmt = afterSeason * discPct;
+  const beforeTier = afterSeason - discAmt + cSurge;
+  const total = Math.max(15, Math.round(beforeTier * cTierMult));
+  const cov = Math.round(income * cTierPct);
+
+  document.getElementById('final-premium').textContent = total;
+  document.getElementById('br-rate').textContent = rate.toFixed(2);
+  document.getElementById('br-base').textContent = base.toFixed(2);
+  document.getElementById('br-zone').textContent = cZone.toFixed(2);
+  document.getElementById('br-zone-amt').textContent = afterZone.toFixed(2);
+  document.getElementById('br-season').textContent = cSeason.toFixed(2);
+  document.getElementById('br-season-amt').textContent = afterSeason.toFixed(2);
+  document.getElementById('br-cfb').textContent = discAmt.toFixed(2);
+  document.getElementById('br-surge').textContent = cSurge.toFixed(2);
+  document.getElementById('br-tier').textContent = cTierMult.toFixed(2);
+  document.getElementById('br-total').textContent = total;
+  document.getElementById('cs-cov').textContent = cov.toLocaleString('en-IN');
+  document.getElementById('cs-p').textContent = total;
+  document.getElementById('cs-c').textContent = cov.toLocaleString('en-IN');
+  document.getElementById('cov-max').textContent = cov.toLocaleString('en-IN');
+  document.getElementById('cov-bar').style.width = (cTierPct * 100) + '%';
+  const ratio = Math.round(cov / total);
+  document.getElementById('cs-ratio').textContent = ratio;
+  const dayLoss = Math.round(income / 6);
+  document.getElementById('cs-day').textContent = dayLoss.toLocaleString('en-IN');
+  document.getElementById('cs-mult').textContent = (cov / total).toFixed(1);
+}
+
+// DISRUPTION SIMULATOR
+const simData = {
+  rain: {
+    title: '🌧 Heavy Rainfall Simulation — Ravi, Anna Nagar, Chennai',
+    worker: 'Ravi', upi: 'ravi@ybl',
+    predictedLoss: 280, coveragePct: 0.7,
+    steps: [
+      { dot:'info', title:'Trigger Detection (7:05 PM)', detail:'IMD API reports 47mm rainfall in past 3 hours at Anna Nagar grid. Threshold: 35mm. <strong style="color:var(--teal)">THRESHOLD BREACHED.</strong>' },
+      { dot:'ok', title:'3-Source Validation (7:07 PM)', detail:'Source 1: IMD ✓ (47mm) · Source 2: OpenWeatherMap ✓ (45mm) · Source 3: Twitter geo-tags #ChennaiRains in zone — 284 posts (5min) ✓. <strong style="color:var(--teal)">ALL 3 SOURCES CONFIRMED.</strong>' },
+      { dot:'ok', title:'Zone Intersection Check', detail:"Ravi's GPS last confirmed at 13.0827°N, 80.2067°E (Anna Nagar). Disruption polygon includes this coordinate. <strong style='color:var(--teal)'>IN ZONE: CONFIRMED.</strong>" },
+      { dot:'info', title:'Platform Activity Validation', detail:'Zomato Partner API: Ravi — 0 orders assigned in last 25 minutes. App status: ONLINE (he is trying to accept orders but none arrive). <strong style="color:var(--teal)">GENUINE STOPPAGE CONFIRMED.</strong>' },
+      { dot:'ok', title:'Digital Income Twin Calculation', detail:"DIT model prediction: Ravi typically earns <strong style='color:var(--amber)'>₹280</strong> between 7:00–9:00 PM on Tuesdays (high confidence, 92 historical data points). Predicted loss window: 2 hours." },
+      { dot:'ok', title:'Community Consensus Check', detail:'22 other Zomato partners in Anna Nagar zone showing zero order activity. Pattern consistent with genuine disruption (not individual behavior). <strong style="color:var(--teal)">COMMUNITY CONSENSUS: PASSED.</strong>' },
+      { dot:'ok', title:'Fraud Engine — All 7 Layers (Score: 12/100)', detail:'GPS authentic ✓ · Platform confirms idle ✓ · Community consensus ✓ · Behavioral baseline normal ✓ · No duplicates ✓ · Policy seasoned 6 weeks ✓ · Earnings trajectory normal ✓. <strong style="color:var(--teal)">FRAUD RISK: LOW. AUTO-APPROVE.</strong>' },
+      { dot:'payout', title:'UPI Payout Initiated (7:10 PM)', detail:'Coverage: 70% × ₹280 = <strong style="color:var(--purple)">₹196</strong>. UPI transfer to ravi@ybl initiated. WhatsApp notification sent. Audit log updated. Policy dashboard refreshed.' },
+    ]
+  },
+  aqi: {
+    title: '💨 Severe AQI Event — Priya, Connaught Place, Delhi',
+    worker: 'Priya', upi: 'priya@okaxis',
+    predictedLoss: 390, coveragePct: 0.7,
+    steps: [
+      { dot:'info', title:'AQI Trigger Detection (10:00 AM)', detail:'CPCB API reports AQI = 428 (Severe) in Central Delhi grid. Threshold: AQI > 400. <strong style="color:var(--teal)">THRESHOLD BREACHED.</strong>' },
+      { dot:'ok', title:'3-Source Validation', detail:'Source 1: CPCB ✓ (AQI 428) · Source 2: AirVisual ✓ (AQI 431) · Source 3: WHO India Severe Alert issued for zone ✓. <strong style="color:var(--teal)">ALL SOURCES CONFIRMED.</strong>' },
+      { dot:'ok', title:'Worker Activity Validation', detail:'Swiggy Partner API: Priya — 0 orders in 30 minutes. App active. GPS confirms she is in Connaught Place (inside zone). <strong style="color:var(--teal)">CONFIRMED IDLE.</strong>' },
+      { dot:'ok', title:'DIT Prediction', detail:"Priya's DIT model: Predicted earning Monday 10AM–2PM = <strong style='color:var(--amber)'>₹390</strong> (4-hour window, lunch peak included)." },
+      { dot:'ok', title:'Fraud Engine (Score: 24/100)', detail:'All checks passed. Policy active 9 weeks. No prior AQI claims. GPS in zone. <strong style="color:var(--teal)">AUTO-APPROVE.</strong>' },
+      { dot:'payout', title:'UPI Payout', detail:'70% × ₹390 = <strong style="color:var(--purple)">₹273</strong> transferred to priya@okaxis.' },
+    ]
+  },
+  curfew: {
+    title: '🚫 District Curfew — Suresh, MG Road, Bengaluru',
+    worker: 'Suresh', upi: 'suresh@upi',
+    predictedLoss: 620, coveragePct: 0.7,
+    steps: [
+      { dot:'info', title:'Curfew Alert Detected (5:58 AM)', detail:'Karnataka Police official Twitter API: Section 144 imposed in Central Bengaluru effective 6:00 AM. PIB press release confirmed.' },
+      { dot:'ok', title:'3-Source Validation', detail:'Source 1: Karnataka Police API ✓ · Source 2: PIB press release ✓ · Source 3: Google Maps road closures in zone ✓. <strong style="color:var(--teal)">CONFIRMED.</strong>' },
+      { dot:'ok', title:'Pre-emptive Trigger (6:00 AM)', detail:'Policy triggered before Suresh even wakes up. KAVACH is proactive — worker does not need to file a claim.' },
+      { dot:'ok', title:'DIT Prediction — Full Day', detail:"Suresh's DIT: Thursday full day (8AM–8PM) predicted earnings across Zomato + Swiggy combined = <strong style='color:var(--amber)'>₹620</strong>. Multi-platform aggregation active." },
+      { dot:'ok', title:'Fraud Engine (Score: 6/100)', detail:'Curfew is a public, government-confirmed event. Fraud risk minimal. Entire zone affected. <strong style="color:var(--teal)">AUTO-APPROVE.</strong>' },
+      { dot:'payout', title:'UPI Payout (6:08 AM)', detail:'70% × ₹620 = <strong style="color:var(--purple)">₹434</strong> transferred to suresh@upi. WhatsApp: "KAVACH: Curfew coverage activated. ₹434 paid."' },
+    ]
+  },
+  outage: {
+    title: '📵 Platform Outage — Priya, Delhi, Swiggy Down',
+    worker: 'Priya', upi: 'priya@okaxis',
+    predictedLoss: 310, coveragePct: 0.7,
+    steps: [
+      { dot:'info', title:'Outage Detected (1:00 PM)', detail:'Swiggy API heartbeat: p95 response latency = 14.2 seconds (threshold: 8s). Sustained for 15 minutes. <strong style="color:var(--teal)">TRIGGER CONDITION MET.</strong>' },
+      { dot:'ok', title:'3-Source Validation', detail:'Source 1: Heartbeat API ✓ · Source 2: Downdetector Swiggy score 623 (threshold: 500) ✓ · Source 3: Twitter volume spike — 1,240 #SwiggDown posts in 10 min ✓.' },
+      { dot:'ok', title:'Worker Activity Validation', detail:'Swiggy API: 0 orders assigned to Priya in 30 minutes. GPS: Priya is at a restaurant pickup point (ready to work, not home). <strong style="color:var(--teal)">GENUINE IDLE CONFIRMED.</strong>' },
+      { dot:'ok', title:'DIT Prediction', detail:"Friday 1–3 PM (lunch peak): Priya's DIT predicts <strong style='color:var(--amber)'>₹310</strong> income. Outage confirmed 1:00–3:30 PM = full 2.5 hour window loss." },
+      { dot:'ok', title:'Fraud Engine (Score: 17/100)', detail:'Platform outage is a system-level event affecting all workers in zone. <strong style="color:var(--teal)">AUTO-APPROVE.</strong>' },
+      { dot:'payout', title:'UPI Payout', detail:'70% × ₹310 = <strong style="color:var(--purple)">₹217</strong> transferred to priya@okaxis. Policy: Platform Outage Trigger.' },
+    ]
+  }
+};
+
+let simTimeout = null;
+
+function simulate(type) {
+  resetSim();
+  const data = simData[type];
+  const panel = document.getElementById('sim-panel');
+  panel.classList.add('show');
+  document.getElementById('sim-title').textContent = data.title;
+  document.getElementById('payout-worker').textContent = data.worker;
+  document.getElementById('payout-upi').textContent = 'UPI: ' + data.upi;
+  document.getElementById('payout-amt').textContent = Math.round(data.predictedLoss * data.coveragePct);
+
+  const container = document.getElementById('sim-steps');
+  container.innerHTML = '';
+  const dotClasses = { info:'dot-info', ok:'dot-ok', warn:'dot-warn', payout:'dot-payout', pending:'dot-pending' };
+  const nums = ['1','2','3','4','5','6','7','8'];
+  data.steps.forEach((step, i) => {
+    const div = document.createElement('div');
+    div.className = 'sim-step';
+    div.id = 'sstep' + i;
+    div.innerHTML = `<div class="step-dot ${dotClasses[step.dot] || 'dot-pending'}">${nums[i] || i+1}</div><div class="step-content"><div class="title">${step.title}</div><div class="detail">${step.detail}</div></div>`;
+    container.appendChild(div);
+  });
+
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
+
+  let delay = 600;
+  data.steps.forEach((_, i) => {
+    setTimeout(() => {
+      document.getElementById('sstep' + i)?.classList.add('visible');
+      if(i === data.steps.length - 1) {
+        setTimeout(() => {
+          document.getElementById('payout-final').style.display = 'block';
+        }, 500);
+      }
+    }, delay);
+    delay += 700;
+  });
+}
+
+function resetSim() {
+  document.getElementById('sim-panel').classList.remove('show');
+  document.getElementById('payout-final').style.display = 'none';
+  if(simTimeout) clearTimeout(simTimeout);
+}
+
+// Init
+calcPremium();
+</script>
+</body>
+</html>
