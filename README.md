@@ -11,7 +11,7 @@
 5. [Parametric Trigger Architecture](#5-parametric-trigger-architecture)
 6. [AI/ML Integration Plan](#6-aiml-integration-plan)
 7. [Fraud Detection Architecture](#7-fraud-detection-architecture)
-8. [Platform Choice: Mobile App](#8-platform-choice-mobile-app)
+8. [Platform Choice: Progressive Web App (PWA)](#8-platform-choice-progressive-web-app-pwa)
 9. [Tech Stack & Architecture](#9-tech-stack--architecture)
 10. [6-Week Development Plan](#10-6-week-development-plan)
 11. [Loophole Analysis & Failure-Proofing](#11-loophole-analysis--failure-proofing)
@@ -467,21 +467,21 @@ All the above signals are aggregated in real-time into a fraud score (0–100).
 
 ---
 
-## 8. Platform Choice: Mobile App
+## 8. Platform Choice: Progressive Web App (PWA)
 
-**Decision: Native Android App**
+**Decision: Progressive Web App (PWA)**
 
 ### Justification
 
-Gig delivery workers in India are exclusively mobile-first. They operate entirely from their phones while on the road — checking orders, tracking routes, and communicating with customers. A mobile app is the only platform that fits naturally into their existing workflow.
+Gig delivery workers in India are mobile-first but operate across a wide range of entry-level Android devices (₹6,000–₹15,000 range) with limited storage and constrained data plans. A PWA gives us the reach of a website with the feel of a native app — no Play Store friction, instant updates, and a 2MB install footprint versus an 80MB native app.
 
-The overwhelming majority of delivery partners use mid-range Android devices (₹8,000–₹15,000 range) on 4G connections. Building natively for Android means the app can access GPS in the background, send reliable push notifications for instant payout alerts, and function smoothly on lower-end hardware without browser overhead.
+A single PWA codebase also serves both the worker-facing app and the insurer admin dashboard, significantly reducing development overhead across the 6-week hackathon timeline.
 
 **Key UX Principles:**
 - Primary language: English + Hindi + Tamil + Telugu + Kannada (i18n from Day 1)
 - Zero-tap claim flow — payouts trigger automatically; worker only sees a notification
-- WhatsApp as the secondary notification channel for workers who miss push alerts
-- App loads and renders dashboard in under 2 seconds on a 4G connection
+- WhatsApp as the primary notification channel — more reliable than push notifications on budget Android devices
+- Dashboard loads in under 2 seconds on a 3G/4G connection via Service Worker caching
 - Offline mode: policy status and last payout visible even without connectivity
 
 ---
@@ -490,12 +490,13 @@ The overwhelming majority of delivery partners use mid-range Android devices (�
 
 ### System Architecture Overview
 ```
+
 ┌─────────────────────────────────────────────────────────────────┐
 │                        KAVACH PLATFORM                          │
 │                                                                 │
 │   ┌─────────────────┐              ┌──────────────────────┐     │
-│   │   Worker App    │              │   Admin Dashboard    │     │
-│   │ (Android/Mobile)│              │  (Insurer Analytics) │     │
+│   │   Worker PWA    │              │   Admin Dashboard    │     │
+│   │  (React.js)     │              │  (Insurer Analytics) │     │
 │   └────────┬────────┘              └──────────┬───────────┘     │
 │            │                                  │                 │
 │   ┌────────▼──────────────────────────────────▼───────────┐     │
@@ -514,9 +515,9 @@ The overwhelming majority of delivery partners use mid-range Android devices (�
 │   └──────┬──────┘ └─────┬──────┘ └───────────────┘              │
 │          │              │                                       │
 │          │       ┌──────▼───────────────┐                       │
-│          │       │  Trigger Orchestrator │                      │
-│          │       │  (Redis Queue)        │                      │
-│          │       │  3-source validation  │                      │
+│          │       │  Trigger Orchestrator│                       │
+│          │       │  (Redis Queue)       │                       │
+│          │       │  3-source validation │                       │
 │          │       └──────────────────────┘                       │
 │          │                    │                                 │
 │   ┌──────▼────────────────────▼───────────────────────────┐     │
@@ -560,12 +561,12 @@ FRAUD ENGINE (7 Layers — runs inside Claims Engine)
    Layer 6 · Earnings Continuity Audit
    Layer 7 · Isolation Forest Real-Time Score (0–100)
 ```
+
 ### Technology Choices
 
 | Layer | Technology | Justification |
 |---|---|---|
-| Mobile App | Android (Kotlin) | Native Android for background GPS, push notifications, and smooth performance on mid-range Indian devices |
-| Admin Dashboard | React.js | Web-based insurer dashboard, separate from the worker-facing mobile app |
+| Frontend | React.js (PWA) | Single codebase for worker app + insurer dashboard; 2MB footprint works on entry-level Android devices and 3G connections |
 | API Layer | Node.js + Express | Fast async I/O for real-time trigger handling |
 | ML Services | Python + FastAPI | Data science ecosystem (pandas, scikit-learn, XGBoost) |
 | Database | PostgreSQL | ACID compliance, geospatial support (PostGIS) |
@@ -765,6 +766,6 @@ A genuine worker stranded in the same zone passes all signals naturally without 
 *KAVACH is not just parametric insurance. It is the first system to give gig workers a true income mirror — one that knows exactly what they lost, pays exactly what they're owed, and does it in under 30 minutes — every time.*
 
 ---
-**Demo Video:** [2-minute video link — to be added]
 
-
+**Prototype:** [(https://kavach-sage.vercel.app/)]
+**Demo Video:** [https://drive.google.com/drive/folders/15QooszWazdxGJhgMfVfFb2STf7PS5G2z]
