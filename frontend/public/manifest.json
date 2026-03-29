@@ -1,0 +1,15 @@
+{
+  "short_name": "KAVACH",
+  "name": "KAVACH — Income Shield",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#39d353",
+  "background_color": "#0d1117",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
