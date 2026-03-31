@@ -59,10 +59,15 @@ export default function Onboarding() {
     if (!otp || otp.length !== 6) return setError('Enter the 6-digit OTP');
     setError(''); setLoading(true);
     try {
-      await verifyOTP(phone, otp);
+      const { data } = await verifyOTP(phone, otp);
       // Don't call login() here — worker profile is incomplete
       // Just move to next step
-      setStep(2);
+      if (data.isNewWorker) {
+        setStep(2);
+      } else {
+        login(data.token, data.worker);
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid OTP');
     } finally { setLoading(false); }

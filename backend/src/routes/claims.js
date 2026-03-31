@@ -45,12 +45,14 @@ router.post('/auto-process', protect, async (req, res) => {
     const { triggerType, triggerLevel, triggerSources, disruptionStart, disruptionEnd, actualEarned, deviceSignals } = req.body;
     const worker = req.worker;
 
-    const policy = await Policy.findOne({ worker: worker._id, status: 'active' });
-    if (!policy) return res.status(400).json({ error: 'No active policy found' });
-
     const now = new Date();
-    if (now < policy.weekStart || now > policy.weekEnd)
-      return res.status(400).json({ error: 'Disruption outside policy window' });
+    const policy = await Policy.findOne({
+      worker: worker._id,
+      status: 'active',
+      weekStart: { $lte: now },
+      weekEnd: { $gte: now },
+    });
+    if (!policy) return res.status(400).json({ error: 'No active policy found' });
 
     const windowStart   = disruptionStart ? new Date(disruptionStart) : new Date(Date.now() - 2 * 60 * 60 * 1000);
     const windowEnd     = disruptionEnd   ? new Date(disruptionEnd)   : new Date();

@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [triggers, setTriggers] = useState(null);
   const [loading,  setLoading]  = useState(true);
   const [simulating, setSimulating] = useState(false);
+  const triggerEntries = Object.entries(triggers?.allResults || triggers?.results || {});
 
   useEffect(() => {
     Promise.all([
@@ -100,8 +101,13 @@ export default function Dashboard() {
         {triggers && (
           <div className="card" style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Live Disruption Monitor</div>
+            {triggerEntries.length === 0 && (
+              <div style={{ fontSize: 12, color: '#8b949e', marginBottom: 8 }}>
+                No live disruption data available right now.
+              </div>
+            )}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {Object.entries(triggers.allResults || {}).map(([key, val]) => (
+              {triggerEntries.map(([key, val]) => (
                 <div key={key} style={{
                   padding: '4px 12px', borderRadius: 20, fontSize: 12,
                   background: val.triggered ? '#490202' : '#0d2818',

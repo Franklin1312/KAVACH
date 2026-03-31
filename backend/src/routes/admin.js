@@ -3,6 +3,9 @@ const router   = express.Router();
 const Worker   = require('../models/Worker');
 const Policy   = require('../models/Policy');
 const Claim    = require('../models/Claim');
+const AuditLog = require('../models/AuditLog');
+const { processPayout } = require('../services/paymentService');
+const { notifyClaimAutoApproved } = require('../services/notificationService');
 
 // GET /api/admin/stats
 router.get('/stats', async (req, res) => {
@@ -122,6 +125,67 @@ router.get('/workers', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(50);
     res.json({ success: true, workers });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/admin/claims/:id/resolve
+router.put('/claims/:id/resolve', async (req, res) => {
+  try {
+    const { action, notes } = req.body;
+
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+
+    const claim = await Claim.findById(req.params.id).populate('worker');
+    if (!claim) return res.status(404).json({ error: 'Claim not found' });
+
+    if (!['pending', 'manual_review'].includes(claim.payoutStatus)) {
+      return res.status(400).json({ error: 'Claim is not awaiting review' });
+    }
+
+    if (!claim.worker) {
+      return res.status(400).json({ error: 'Worker record not found for claim' });
+    }
+
+    if (action === 'approve') {
+      const payout = await processPayout(claim.worker, claim.payoutAmount, claim._id);
+      claim.payoutStatus = 'paid';
+      claim.razorpayPayoutId = payout.id;
+      claim.paidAt = new Date();
+      claim.reviewNotes = notes?.trim() || 'Approved by admin review';
+      await claim.save();
+
+      await notifyClaimAutoApproved(claim.worker, claim, payout).catch(() => {});
+      await Worker.findByIdAndUpdate(claim.worker._id, { claimsFreeWeeks: 0 });
+    } else {
+      claim.payoutStatus = 'rejected';
+      claim.reviewNotes = notes?.trim() || 'Rejected by admin review';
+      await claim.save();
+    }
+
+    await AuditLog.create({
+      worker: claim.worker._id,
+      event: 'ADMIN_CLAIM_REVIEWED',
+      meta: {
+        claimId: claim._id,
+        action,
+        payoutStatus: claim.payoutStatus,
+        reviewNotes: claim.reviewNotes,
+      },
+    });
+
+    const refreshedClaim = await Claim.findById(claim._id)
+      .populate('worker', 'name phone city zone')
+      .populate('policy', 'tier coveragePct');
+
+    res.json({
+      success: true,
+      message: action === 'approve' ? 'Claim approved and payout processed' : 'Claim rejected',
+      claim: refreshedClaim,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

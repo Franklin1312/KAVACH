@@ -52,11 +52,32 @@ router.post('/verify-otp', async (req, res) => {
     worker.otpExpiry = undefined;
     await worker.save();
 
+    const workerPayload = worker.isVerified
+      ? {
+          id: worker._id,
+          name: worker.name,
+          phone: worker.phone,
+          city: worker.city,
+          zone: worker.zone,
+          platforms: worker.platforms,
+          declaredWeeklyIncome: worker.declaredWeeklyIncome,
+          verifiedWeeklyIncome: worker.verifiedWeeklyIncome,
+          zoneRiskFactor: worker.zoneRiskFactor,
+          claimsFreeWeeks: worker.claimsFreeWeeks,
+          isVerified: worker.isVerified,
+          upiId: worker.upiId,
+        }
+      : {
+          id: worker._id,
+          phone: worker.phone,
+          isVerified: worker.isVerified,
+        };
+
     res.json({
       success: true,
       token: generateToken(worker._id),
       isNewWorker: !worker.isVerified,
-      worker: { id: worker._id, phone: worker.phone, isVerified: worker.isVerified },
+      worker: workerPayload,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

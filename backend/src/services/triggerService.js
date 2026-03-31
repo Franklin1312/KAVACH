@@ -190,7 +190,14 @@ async function runAllTriggers(worker, platforms) {
     .sort(([, a], [, b]) => b.level - a.level);
 
   if (triggered.length === 0) {
-    return { anyTriggered: false, results };
+    return {
+      anyTriggered: false,
+      triggerType: null,
+      triggerLevel: null,
+      triggerSource: null,
+      allResults: results,
+      results,
+    };
   }
 
   const [topType, topData] = triggered[0];

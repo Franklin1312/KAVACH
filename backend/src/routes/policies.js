@@ -52,7 +52,25 @@ router.get('/', protect, async (req, res) => {
 // GET /api/policies/active
 router.get('/active', protect, async (req, res) => {
   try {
-    const policy = await Policy.findOne({ worker: req.worker._id, status: 'active' });
+    const now = new Date();
+    const policy = await Policy.findOne({
+      worker: req.worker._id,
+      status: 'active',
+      weekStart: { $lte: now },
+      weekEnd: { $gte: now },
+    });
+
+    if (!policy) {
+      await Policy.updateMany(
+        {
+          worker: req.worker._id,
+          status: 'active',
+          weekEnd: { $lt: now },
+        },
+        { status: 'expired' }
+      );
+    }
+
     res.json({ success: true, policy: policy || null });
   } catch (err) {
     res.status(500).json({ error: err.message });
