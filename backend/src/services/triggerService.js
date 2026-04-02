@@ -93,6 +93,7 @@ function evaluateAQI(aqi) {
   if (aqi >= 400) return { triggered: true,  level: 4, value: `AQI ${aqi}`, source: 'CPCB AQI' };
   if (aqi >= 300) return { triggered: true,  level: 3, value: `AQI ${aqi}`, source: 'CPCB AQI' };
   if (aqi >= 200) return { triggered: true,  level: 2, value: `AQI ${aqi}`, source: 'CPCB AQI' };
+  if (aqi >= 150) return { triggered: true,  level: 1, value: `AQI ${aqi}`, source: 'CPCB AQI' };
   return { triggered: false, source: 'CPCB AQI', value: `AQI ${aqi}` };
 }
 
@@ -100,7 +101,7 @@ function getMockAQIData(city) {
   const month = new Date().getMonth() + 1;
   const isDelhiSmog = city === 'delhi' && [11, 12, 1, 2].includes(month);
   if (isDelhiSmog) {
-    return { triggered: true, level: 4, value: 'AQI 432', source: 'CPCB AQI (mock)' };
+    return { triggered: true, level: 3, value: 'AQI 342', source: 'CPCB AQI (mock)' };
   }
   return { triggered: false, source: 'CPCB AQI (mock)', value: 'AQI 85' };
 }
@@ -190,14 +191,7 @@ async function runAllTriggers(worker, platforms) {
     .sort(([, a], [, b]) => b.level - a.level);
 
   if (triggered.length === 0) {
-    return {
-      anyTriggered: false,
-      triggerType: null,
-      triggerLevel: null,
-      triggerSource: null,
-      allResults: results,
-      results,
-    };
+    return { anyTriggered: false, results };
   }
 
   const [topType, topData] = triggered[0];

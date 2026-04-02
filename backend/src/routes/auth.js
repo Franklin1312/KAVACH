@@ -52,32 +52,11 @@ router.post('/verify-otp', async (req, res) => {
     worker.otpExpiry = undefined;
     await worker.save();
 
-    const workerPayload = worker.isVerified
-      ? {
-          id: worker._id,
-          name: worker.name,
-          phone: worker.phone,
-          city: worker.city,
-          zone: worker.zone,
-          platforms: worker.platforms,
-          declaredWeeklyIncome: worker.declaredWeeklyIncome,
-          verifiedWeeklyIncome: worker.verifiedWeeklyIncome,
-          zoneRiskFactor: worker.zoneRiskFactor,
-          claimsFreeWeeks: worker.claimsFreeWeeks,
-          isVerified: worker.isVerified,
-          upiId: worker.upiId,
-        }
-      : {
-          id: worker._id,
-          phone: worker.phone,
-          isVerified: worker.isVerified,
-        };
-
     res.json({
       success: true,
       token: generateToken(worker._id),
       isNewWorker: !worker.isVerified,
-      worker: workerPayload,
+      worker: { id: worker._id, phone: worker.phone, isVerified: worker.isVerified },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -97,6 +76,12 @@ router.post('/register', async (req, res) => {
 
     const zoneRiskFactor = getZoneRisk(city, zone);
 
+    // 7-day minimum activity check (mock — in production verified via platform API)
+    // Workers registered less than 7 days ago get a lower tier flag
+    const platformJoinDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // mock: assume joined 30 days ago
+    const activeDaysMock   = 14; // mock active days — real value from Zomato/Swiggy API
+    const meetsActivityReq = activeDaysMock >= 7;
+
     const worker = await Worker.findOneAndUpdate(
       { phone },
       {
@@ -105,6 +90,9 @@ router.post('/register', async (req, res) => {
         verifiedWeeklyIncome: declaredWeeklyIncome,
         workingHours: workingHours || 'full',
         upiId, isVerified: true, zoneRiskFactor,
+        // Activity tier — workers with <7 active days get lower tier
+        activityTier: meetsActivityReq ? 'standard' : 'lower',
+        claimsFreeWeeks: 0,
       },
       { new: true }
     );
