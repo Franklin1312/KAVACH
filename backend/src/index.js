@@ -8,7 +8,8 @@ const app = express();
 
 connectDB();
 
-app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
+const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, '') : '*';
+app.use(cors({ origin: clientUrl }));
 app.use(express.json());
 app.use(morgan('dev'));
 
