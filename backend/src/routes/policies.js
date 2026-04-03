@@ -7,6 +7,7 @@ const AuditLog = require('../models/AuditLog');
 const { calculatePremium }            = require('../services/premiumService');
 const { notifyPolicyActivated }       = require('../services/notificationService');
 const { createPremiumSubscription }   = require('../services/paymentService');
+const { findActivePolicyForWorker }   = require('../services/policyAccessService');
 
 function getCurrentWeekWindow() {
   const now  = new Date();
@@ -53,12 +54,7 @@ router.get('/', protect, async (req, res) => {
 router.get('/active', protect, async (req, res) => {
   try {
     const now = new Date();
-    const policy = await Policy.findOne({
-      worker: req.worker._id,
-      status: 'active',
-      weekStart: { $lte: now },
-      weekEnd: { $gte: now },
-    });
+    const policy = await findActivePolicyForWorker(req.worker._id, now);
 
     if (!policy) {
       await Policy.updateMany(
@@ -84,7 +80,7 @@ router.post('/', protect, async (req, res) => {
     const worker   = req.worker;
     const { weekStart, weekEnd } = getCurrentWeekWindow();
 
-    const existing = await Policy.findOne({ worker: worker._id, status: 'active', weekStart: { $gte: weekStart } });
+    const existing = await findActivePolicyForWorker(worker._id, new Date());
     if (existing) return res.status(400).json({ error: 'You already have an active policy this week', policy: existing });
 
     const { breakdown, finalAmount, coveragePct, maxPayout, tier: selectedTier } =
@@ -112,7 +108,7 @@ router.post('/', protect, async (req, res) => {
       },
       weekStart, weekEnd, maxPayout, status: 'active',
       razorpaySubscriptionId: subscription?.id,
-      premiumPaid: false,
+      premiumPaid: Boolean(subscription?.mock),
     });
 
     // WhatsApp notification

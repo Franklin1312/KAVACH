@@ -22,6 +22,24 @@ const ClaimSchema = new mongoose.Schema(
 
     disruptionStart: { type: Date, required: true },
     disruptionEnd:   { type: Date },
+    windowSummary: {
+      verifiedDisruptionWindow: {
+        start: Date,
+        end: Date,
+        durationMinutes: Number,
+        methodology: String,
+      },
+      eligibleWorkWindow: {
+        start: Date,
+        end: Date,
+        totalEligibleMinutes: Number,
+      },
+      finalLossWindow: {
+        start: Date,
+        end: Date,
+        totalEligibleMinutes: Number,
+      },
+    },
 
     predictedLoss: { type: Number, required: true },
     actualEarned:  { type: Number, default: 0 },

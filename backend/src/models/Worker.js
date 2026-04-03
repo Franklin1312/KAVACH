@@ -15,7 +15,15 @@ const WorkerSchema = new mongoose.Schema(
       },
     ],
 
-    city: { type: String, enum: ['chennai', 'mumbai', 'delhi', 'bengaluru'] },
+    city: {
+      type: String,
+      enum: [
+        'chennai', 'mumbai', 'delhi', 'bengaluru',
+        'hyderabad', 'pune', 'kolkata', 'ahmedabad',
+        'jaipur', 'lucknow', 'surat', 'kochi',
+        'chandigarh', 'indore', 'nagpur', 'coimbatore',
+      ],
+    },
     zone: { type: String },
 
     location: {
@@ -29,6 +37,16 @@ const WorkerSchema = new mongoose.Schema(
       type: String,
       enum: ['part', 'full', 'extended'],
       default: 'full',
+    },
+    usualShiftStart: { type: String, default: '10:00' },
+    usualShiftEnd:   { type: String, default: '20:00' },
+    workingDays: {
+      type: [Number],
+      default: [1, 2, 3, 4, 5, 6],
+      validate: {
+        validator: (days) => Array.isArray(days) && days.every((day) => Number.isInteger(day) && day >= 0 && day <= 6),
+        message: 'workingDays must be integers between 0 and 6',
+      },
     },
 
     zoneRiskFactor:  { type: Number, default: 1.0 },

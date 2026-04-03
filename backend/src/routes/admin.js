@@ -104,13 +104,30 @@ router.get('/workers', async (req, res) => {
 router.put('/claims/:id/approve', async (req, res) => {
   try {
     const { reviewNotes } = req.body;
-    const claim = await Claim.findById(req.params.id).populate('worker');
+    const claim = await Claim.findById(req.params.id).populate('worker').populate('policy');
     if (!claim) return res.status(404).json({ error: 'Claim not found' });
 
     if (claim.payoutStatus === 'paid')
       return res.status(400).json({ error: 'Claim already paid' });
+    if (!claim.policy?.premiumPaid)
+      return res.status(400).json({ error: 'Policy premium is not marked as paid yet' });
+
+    const [reserved] = await Claim.aggregate([
+      {
+        $match: {
+          policy: claim.policy._id,
+          _id: { $ne: claim._id },
+          payoutStatus: { $in: ['approved', 'paid', 'pending', 'manual_review'] },
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$payoutAmount' } } },
+    ]);
+    const remainingCoverage = Math.max(0, claim.policy.maxPayout - (reserved?.total || 0));
+    if (remainingCoverage <= 0)
+      return res.status(400).json({ error: 'Policy weekly max payout has already been exhausted' });
 
     const worker = claim.worker;
+    claim.payoutAmount = Math.min(claim.payoutAmount, remainingCoverage);
     const payout = await processPayout(worker, claim.payoutAmount, claim._id);
 
     // Handle rollback scenario

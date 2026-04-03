@@ -66,6 +66,8 @@ function scheduleWeeklyRenewal() {
           tier:            'standard',
         });
 
+        const subscription = await createPremiumSubscription(worker, finalAmount).catch(() => ({ id: null }));
+
         const policy = await Policy.create({
           worker:     worker._id,
           tier:       'standard',
@@ -82,8 +84,9 @@ function scheduleWeeklyRenewal() {
           weekStart,
           weekEnd,
           maxPayout,
+          razorpaySubscriptionId: subscription?.id,
           status:      'active',
-          premiumPaid: false,
+          premiumPaid: Boolean(subscription?.mock),
         });
 
         // Send WhatsApp notification

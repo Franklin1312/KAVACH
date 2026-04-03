@@ -1,7 +1,7 @@
 const express  = require('express');
 const router   = express.Router();
 const { protect } = require('../middleware/auth');
-const { runAllTriggers, checkRainTrigger, checkAQITrigger, checkPlatformOutage, checkFloodTrigger } = require('../services/triggerService');
+const { runAllTriggers, checkRainTrigger, checkAQITrigger, checkPlatformOutage, checkFloodTrigger, buildSimulatedTrigger, deriveDisruptionWindow } = require('../services/triggerService');
 const claimsRouter = require('./claims');
 
 // GET /api/triggers/status — check all triggers for logged-in worker's city
@@ -43,15 +43,17 @@ router.post('/simulate', protect, async (req, res) => {
     };
 
     // Return trigger data — frontend or cron job then calls /api/claims/auto-process
+    const simulated = buildSimulatedTrigger(triggerType, triggerLevel);
+
     res.json({
       success: true,
       message: `Disruption simulated: ${triggerType} level ${triggerLevel}`,
       triggerData: {
-        triggerType,
-        triggerLevel,
+        triggerType: simulated.triggerType,
+        triggerLevel: simulated.triggerLevel,
         triggerSources:  mockSources[triggerType] || [],
-        disruptionStart: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        disruptionEnd:   new Date().toISOString(),
+        disruptionStart: simulated.disruptionStart,
+        disruptionEnd:   simulated.disruptionEnd,
         actualEarned:    0,
       },
     });
@@ -64,7 +66,7 @@ router.post('/simulate', protect, async (req, res) => {
 router.get('/check/rain', protect, async (req, res) => {
   try {
     const result = await checkRainTrigger(req.worker.city);
-    res.json({ success: true, result });
+    res.json({ success: true, result, disruptionWindow: deriveDisruptionWindow('rain', result) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -74,7 +76,7 @@ router.get('/check/rain', protect, async (req, res) => {
 router.get('/check/aqi', protect, async (req, res) => {
   try {
     const result = await checkAQITrigger(req.worker.city);
-    res.json({ success: true, result });
+    res.json({ success: true, result, disruptionWindow: deriveDisruptionWindow('aqi', result) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

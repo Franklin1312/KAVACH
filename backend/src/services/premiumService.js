@@ -18,34 +18,30 @@ function getBaseRate(weeklyIncome) {
 
 // Season multiplier by city + current month
 function getSeasonMultiplier(city) {
-  const month = new Date().getMonth() + 1; // 1–12
-
+  const month = new Date().getMonth() + 1;
   const seasons = {
-    chennai: {
-      // NE Monsoon: Oct–Dec
-      neMonsoon: [10, 11, 12],
-      // SW Monsoon: Jun–Sep
-      swMonsoon: [6, 7, 8, 9],
-    },
-    mumbai: {
-      swMonsoon: [6, 7, 8, 9],
-    },
-    bengaluru: {
-      neMonsoon: [10, 11, 12],
-      swMonsoon: [6, 7, 8, 9],
-    },
-    delhi: {
-      // Winter smog: Nov–Feb
-      smog: [11, 12, 1, 2],
-    },
+    chennai:    { neMonsoon: [10,11,12], swMonsoon: [6,7,8,9] },
+    mumbai:     { swMonsoon: [6,7,8,9] },
+    bengaluru:  { neMonsoon: [10,11,12], swMonsoon: [6,7,8,9] },
+    delhi:      { smog: [11,12,1,2] },
+    hyderabad:  { swMonsoon: [6,7,8,9] },
+    pune:       { swMonsoon: [6,7,8,9] },
+    kolkata:    { swMonsoon: [6,7,8,9] },
+    ahmedabad:  { swMonsoon: [6,7,8,9] },
+    surat:      { swMonsoon: [6,7,8,9] },
+    kochi:      { swMonsoon: [6,7,8,9] },
+    coimbatore: { neMonsoon: [10,11,12] },
+    nagpur:     { swMonsoon: [6,7,8,9] },
+    indore:     { swMonsoon: [6,7,8,9] },
+    jaipur:     { smog: [11,12,1,2] },
+    lucknow:    { smog: [11,12,1,2] },
+    chandigarh: { smog: [11,12,1,2] },
   };
-
   const citySeasons = seasons[city] || {};
-
   if (citySeasons.neMonsoon?.includes(month)) return 1.45;
   if (citySeasons.swMonsoon?.includes(month)) return 1.55;
   if (citySeasons.smog?.includes(month))      return 1.20;
-  return 0.80; // dry / off-season
+  return 0.80;
 }
 
 // Claims-free discount

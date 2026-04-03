@@ -1,22 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import React, { useEffect, useState } from 'react';
 import Navbar from '../../components/common/Navbar';
 import { getPremiumQuote, getActivePolicty, createPolicy, cancelPolicy, getAllPolicies } from '../../services/api';
 
+const RUPEE = '\u20B9';
 const TIERS = [
-  { key: 'basic',    label: 'Basic',    pct: '50%', mult: '0.7×', desc: 'Occasional workers' },
-  { key: 'standard', label: 'Standard', pct: '70%', mult: '1.0×', desc: 'Recommended ★',     },
-  { key: 'premium',  label: 'Premium',  pct: '85%', mult: '1.35×',desc: 'Top earners'         },
+  { key: 'basic', label: 'Basic', pct: '50%', desc: 'Occasional workers' },
+  { key: 'standard', label: 'Standard', pct: '70%', desc: 'Recommended' },
+  { key: 'premium', label: 'Premium', pct: '85%', desc: 'Top earners' },
 ];
 
 export default function PolicyPage() {
-  const navigate            = useNavigate();
   const [selectedTier, setSelectedTier] = useState('standard');
-  const [quote,   setQuote]   = useState(null);
-  const [policy,  setPolicy]  = useState(null);
+  const [quote, setQuote] = useState(null);
+  const [policy, setPolicy] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     getActivePolicty().then(({ data }) => setPolicy(data.policy));
@@ -28,7 +27,9 @@ export default function PolicyPage() {
     try {
       const { data } = await getPremiumQuote(tier);
       setQuote(data.quote);
-    } catch {}
+    } catch {
+      setQuote(null);
+    }
   };
 
   const handleTierChange = (tier) => {
@@ -37,14 +38,18 @@ export default function PolicyPage() {
   };
 
   const handleActivate = async () => {
-    setError(''); setLoading(true);
+    setError('');
+    setLoading(true);
     try {
       const { data } = await createPolicy(selectedTier);
       setPolicy(data.policy);
-      getAllPolicies().then(({ d }) => setHistory(d?.policies || []));
+      const historyResponse = await getAllPolicies();
+      setHistory(historyResponse.data.policies || []);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to activate policy');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = async () => {
@@ -53,125 +58,102 @@ export default function PolicyPage() {
       await cancelPolicy(policy._id);
       setPolicy(null);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to cancel');
+      setError(err.response?.data?.error || 'Failed to cancel policy');
     }
   };
 
   return (
     <>
       <Navbar />
-      <div style={{ maxWidth: 700, margin: '0 auto', padding: '28px 20px' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 4 }}>Insurance Policy</h1>
-        <p style={{ color: '#8b949e', fontSize: 13, marginBottom: 24 }}>Weekly income protection — renews every Monday</p>
+      <div style={{ background: '#F5F7FA', minHeight: 'calc(100vh - 64px)' }}>
+        <div className="page-container">
+          <h1 className="page-title">Insurance Policy</h1>
+          <p className="page-subtitle">Weekly income protection that renews every Monday</p>
 
-        {/* Active policy banner */}
-        {policy && (
-          <div className="card" style={{ marginBottom: 20, borderColor: '#196c2e' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {policy && (
+            <div style={{ background: 'linear-gradient(135deg, #E5F7EF 0%, #F4FFFA 100%)', border: '1px solid #BCEAD5', borderRadius: 16, padding: 24, marginBottom: 22, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 24 }}>
               <div>
-                <span className="badge badge-green" style={{ marginBottom: 6 }}>ACTIVE</span>
-                <div style={{ fontSize: 22, fontWeight: 700, color: '#39d353', marginTop: 4 }}>
-                  ₹{policy.maxPayout?.toLocaleString('en-IN')} protected
-                </div>
-                <div style={{ fontSize: 12, color: '#8b949e', marginTop: 4 }}>
-                  {policy.tier?.toUpperCase()} · ₹{policy.premium?.finalAmount}/week ·
-                  Expires {new Date(policy.weekEnd).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                <span className="badge badge-green" style={{ marginBottom: 10 }}>ACTIVE</span>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#007A4D', fontFamily: 'Outfit, sans-serif' }}>{RUPEE}{policy.maxPayout?.toLocaleString('en-IN')} protected</div>
+                <div style={{ fontSize: 13, color: '#5A6478', marginTop: 6 }}>{policy.tier?.toUpperCase()} · {RUPEE}{policy.premium?.finalAmount}/week</div>
+                <div style={{ fontSize: 12, color: '#7B8794', marginTop: 4 }}>Expires {new Date(policy.weekEnd).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
+              </div>
+              <button className="btn-danger" onClick={handleCancel}>Cancel Policy</button>
+            </div>
+          )}
+
+          {!policy && (
+            <>
+              <div className="card" style={{ marginBottom: 22 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Choose Coverage Tier</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                  {TIERS.map((tier) => {
+                    const selected = selectedTier === tier.key;
+                    return (
+                      <div key={tier.key} onClick={() => handleTierChange(tier.key)} style={{ padding: 18, borderRadius: 16, cursor: 'pointer', textAlign: 'center', border: `2px solid ${selected ? '#0B3D91' : '#E5E7EB'}`, background: selected ? '#EBF0FA' : '#fff' }}>
+                        <div style={{ fontSize: 28, fontWeight: 800, color: selected ? '#0B3D91' : '#1A1A2E', fontFamily: 'Outfit, sans-serif' }}>{tier.pct}</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, marginTop: 4 }}>{tier.label}</div>
+                        <div style={{ fontSize: 12, color: '#7B8794', marginTop: 6 }}>{tier.desc}</div>
+                        {tier.key === 'standard' && <div style={{ marginTop: 10, fontSize: 10, fontWeight: 700, color: '#FF6B35' }}>POPULAR</div>}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              <button onClick={handleCancel}
-                style={{ background: '#490202', color: '#f85149', border: '1px solid #f85149', padding: '6px 14px', fontSize: 12 }}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
 
-        {/* Tier selector */}
-        {!policy && (
-          <>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Choose Coverage Tier</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 20 }}>
-              {TIERS.map((t) => (
-                <div key={t.key} onClick={() => handleTierChange(t.key)} style={{
-                  padding: 16, borderRadius: 10, cursor: 'pointer', textAlign: 'center',
-                  border: `1px solid ${selectedTier === t.key ? '#39d353' : '#30363d'}`,
-                  background: selectedTier === t.key ? '#196c2e' : '#21262d',
-                  transition: 'all 0.15s',
-                }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: selectedTier === t.key ? '#39d353' : '#e6edf3' }}>{t.pct}</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4, color: selectedTier === t.key ? '#39d353' : '#e6edf3' }}>{t.label}</div>
-                  <div style={{ fontSize: 11, color: '#8b949e', marginTop: 2 }}>{t.desc}</div>
+              {quote && (
+                <div className="card" style={{ marginBottom: 22 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Premium Breakdown</div>
+                  <div style={{ textAlign: 'center', marginBottom: 18, paddingBottom: 18, borderBottom: '1px solid #F0F0F0' }}>
+                    <div style={{ fontSize: 42, fontWeight: 800, color: '#00A86B', fontFamily: 'Outfit, sans-serif' }}>{RUPEE}{quote.finalAmount}</div>
+                    <div style={{ fontSize: 13, color: '#6B7280' }}>per week · UPI AutoPay every Monday</div>
+                    <div style={{ fontSize: 14, marginTop: 10 }}>Max payout: <strong style={{ color: '#0B3D91' }}>{RUPEE}{quote.maxPayout?.toLocaleString('en-IN')}</strong></div>
+                  </div>
+
+                  {[
+                    ['Base rate', quote.breakdown?.baseRate],
+                    ['Zone risk factor', `${quote.breakdown?.zoneRiskFactor}x`],
+                    ['Season multiplier', `${quote.breakdown?.seasonMultiplier}x`],
+                    ['Claims-free discount', `-${quote.breakdown?.claimsFreeDiscount}`],
+                    ['Surge loading', `+${RUPEE}${quote.breakdown?.surgeLoading}`],
+                    ['Tier multiplier', `${quote.breakdown?.tierMultiplier}x`],
+                  ].map(([label, value]) => (
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F5F5F5', fontSize: 14 }}>
+                      <span style={{ color: '#6B7280' }}>{label}</span>
+                      <span style={{ fontWeight: 600 }}>{value}</span>
+                    </div>
+                  ))}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 14, fontSize: 16, fontWeight: 800 }}>
+                    <span>Weekly Premium</span>
+                    <span style={{ color: '#00A86B' }}>{RUPEE}{quote.finalAmount}</span>
+                  </div>
+                </div>
+              )}
+
+              {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
+              <button className="btn-primary" onClick={handleActivate} disabled={loading}>{loading ? 'Activating...' : `Activate ${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} Policy -&gt;`}</button>
+            </>
+          )}
+
+          {history.length > 0 && (
+            <div className="card" style={{ marginTop: 24 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Policy History</div>
+              {history.map((item) => (
+                <div key={item._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F0F0F0' }}>
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{item.tier?.toUpperCase()}</div>
+                    <div style={{ fontSize: 12, color: '#7B8794' }}>{new Date(item.weekStart).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - {new Date(item.weekEnd).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ fontWeight: 700 }}>{RUPEE}{item.premium?.finalAmount}</div>
+                    <span className={`badge ${item.status === 'active' ? 'badge-green' : item.status === 'cancelled' ? 'badge-red' : 'badge-amber'}`}>{item.status.toUpperCase()}</span>
+                  </div>
                 </div>
               ))}
             </div>
-          </>
-        )}
-
-        {/* Premium breakdown */}
-        {quote && (
-          <div className="card" style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Premium Breakdown</div>
-
-            <div style={{ textAlign: 'center', marginBottom: 16, padding: '16px 0', borderBottom: '1px solid #21262d' }}>
-              <div style={{ fontSize: 40, fontWeight: 700, color: '#39d353' }}>₹{quote.finalAmount}</div>
-              <div style={{ fontSize: 13, color: '#8b949e' }}>per week · UPI AutoPay every Monday</div>
-              <div style={{ fontSize: 13, marginTop: 8 }}>
-                Max payout: <strong style={{ color: '#39d353' }}>₹{quote.maxPayout?.toLocaleString('en-IN')}</strong>
-              </div>
-            </div>
-
-            {[
-              ['Base rate',            quote.breakdown?.baseRate],
-              ['Zone risk factor',     `${quote.breakdown?.zoneRiskFactor}×`],
-              ['Season multiplier',    `${quote.breakdown?.seasonMultiplier}×`],
-              ['Claims-free discount', `-${quote.breakdown?.claimsFreeDiscount}`],
-              ['Surge loading',        `+₹${quote.breakdown?.surgeLoading}`],
-              ['Tier multiplier',      `${quote.breakdown?.tierMultiplier}×`],
-            ].map(([label, val]) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, borderBottom: '1px solid #21262d' }}>
-                <span style={{ color: '#8b949e' }}>{label}</span>
-                <span>{val}</span>
-              </div>
-            ))}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 0', fontWeight: 700, fontSize: 15 }}>
-              <span>Weekly Premium</span>
-              <span style={{ color: '#39d353' }}>₹{quote.finalAmount}</span>
-            </div>
-          </div>
-        )}
-
-        {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
-
-        {!policy && (
-          <button className="btn-primary" onClick={handleActivate} disabled={loading}>
-            {loading ? 'Activating...' : `Activate ${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} Policy →`}
-          </button>
-        )}
-
-        {/* Policy history */}
-        {history.length > 0 && (
-          <div className="card" style={{ marginTop: 24 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Policy History</div>
-            {history.map((p) => (
-              <div key={p._id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #21262d', fontSize: 13 }}>
-                <div>
-                  <span style={{ fontWeight: 600 }}>{p.tier?.toUpperCase()}</span>
-                  <span style={{ color: '#8b949e', marginLeft: 8 }}>
-                    {new Date(p.weekStart).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} –
-                    {new Date(p.weekEnd).toLocaleDateString('en-IN',   { day: 'numeric', month: 'short' })}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span>₹{p.premium?.finalAmount}</span>
-                  <span className={`badge ${p.status === 'active' ? 'badge-green' : p.status === 'cancelled' ? 'badge-red' : 'badge-amber'}`}>
-                    {p.status.toUpperCase()}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </>
   );
