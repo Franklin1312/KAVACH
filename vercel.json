@@ -1,5 +1,0 @@
-{
-  "routes": [
-    { "src": "/", "dest": "/kavach_prototype.html" }
-  ]
-}
