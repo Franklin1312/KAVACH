@@ -22,7 +22,7 @@ router.get('/stats', async (req, res) => {
       Claim.countDocuments({ payoutStatus: { $in: ['pending', 'manual_review'] } }),
       Claim.countDocuments({ payoutStatus: 'rejected' }),
       Policy.aggregate([{ $group: { _id: null, total: { $sum: '$premium.finalAmount' } } }]),
-      Claim.aggregate([{ $match: { payoutStatus: 'paid' } }, { $group: { _id: null, total: { $sum: '$payoutAmount' } } }]),
+      Claim.aggregate([{ $match: { payoutStatus: { $in: ['paid', 'approved'] } } }, { $group: { _id: null, total: { $sum: '$payoutAmount' } } }]),
     ]);
 
     const totalPremiums = premiumData[0]?.total || 0;

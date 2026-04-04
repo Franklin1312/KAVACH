@@ -1,6 +1,7 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import Navbar from '../../components/common/Navbar';
 import { getActivePolicty, getAllClaims, getTriggerStatus, autoProcessClaim, updateMe } from '../../services/api';
 
@@ -21,15 +22,16 @@ function getShiftPreset(workingHours) {
   return { usualShiftStart: '10:00', usualShiftEnd: '20:00' };
 }
 
-function getTimeGreeting() {
+function getTimeGreetingKey() {
   const hour = new Date().getHours();
-  if (hour < 12) return 'morning';
-  if (hour < 17) return 'afternoon';
-  return 'evening';
+  if (hour < 12) return 'dash.greeting.morning';
+  if (hour < 17) return 'dash.greeting.afternoon';
+  return 'dash.greeting.evening';
 }
 
 export default function Dashboard() {
   const { worker, setWorker } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [policy, setPolicy] = useState(null);
   const [claims, setClaims] = useState([]);
@@ -132,13 +134,13 @@ export default function Dashboard() {
       <div style={{ background: '#F5F7FA', minHeight: 'calc(100vh - 64px)' }}>
         <div className="page-container">
           <div style={{ marginBottom: 28 }}>
-            <h1 className="page-title">Good {getTimeGreeting()}, {worker?.name?.split(' ')[0]}</h1>
+            <h1 className="page-title">{t(getTimeGreetingKey())}, {worker?.name?.split(' ')[0]}</h1>
             <p className="page-subtitle" style={{ marginBottom: 0 }}>{worker?.city} · {worker?.zone}</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr 0.7fr 0.7fr', gap: 14, marginBottom: 20 }}>
             <div style={{ background: 'linear-gradient(135deg, #0B3D91 0%, #1A5BC4 100%)', color: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 10px 30px rgba(11,61,145,0.18)' }}>
-              <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 6 }}>Weekly Coverage</div>
+              <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 6 }}>{t('dash.weeklyCoverage', 'Weekly Coverage')}</div>
               {policy ? (
                 <>
                   <div style={{ fontSize: 34, fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}>{RUPEE}{policy.maxPayout?.toLocaleString('en-IN')}</div>
@@ -147,24 +149,24 @@ export default function Dashboard() {
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: 24, fontWeight: 700 }}>No active policy</div>
-                  <button className="btn-primary" style={{ width: 'auto', marginTop: 16 }} onClick={() => navigate('/policy')}>Activate Weekly Policy -&gt;</button>
+                  <div style={{ fontSize: 24, fontWeight: 700 }}>{t('dash.noActivePolicy', 'No active policy')}</div>
+                  <button className="btn-primary" style={{ width: 'auto', marginTop: 16 }} onClick={() => navigate('/policy')}>{t('dash.activatePolicy', 'Activate Weekly Policy →')}</button>
                 </>
               )}
             </div>
 
-            <div className="stat-card"><div className="stat-value" style={{ color: '#0B3D91' }}>{policy?.premium?.finalAmount ? `${RUPEE}${policy.premium.finalAmount}` : '—'}</div><div className="stat-label">Weekly Premium</div></div>
-            <div className="stat-card"><div className="stat-value" style={{ color: '#1A1A2E' }}>{claims.length}</div><div className="stat-label">Recent Claims</div></div>
-            <div className="stat-card"><div className="stat-value" style={{ color: '#00A86B' }}>{worker?.claimsFreeWeeks || 0}w</div><div className="stat-label">Claims-Free</div></div>
+            <div className="stat-card"><div className="stat-value" style={{ color: '#0B3D91' }}>{policy?.premium?.finalAmount ? `${RUPEE}${policy.premium.finalAmount}` : '—'}</div><div className="stat-label">{t('dash.weeklyPremium', 'Weekly Premium')}</div></div>
+            <div className="stat-card"><div className="stat-value" style={{ color: '#1A1A2E' }}>{claims.length}</div><div className="stat-label">{t('dash.recentClaims', 'Recent Claims')}</div></div>
+            <div className="stat-card"><div className="stat-value" style={{ color: '#00A86B' }}>{worker?.claimsFreeWeeks || 0}w</div><div className="stat-label">{t('dash.claimsFree', 'Claims-Free')}</div></div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 16, alignItems: 'start' }}>
             <div style={{ display: 'grid', gap: 16 }}>
               {triggers && (
                 <div className="card">
-                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Live Disruption Monitor</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('dash.liveMonitor', 'Live Disruption Monitor')}</div>
                   {triggerEntries.length === 0 ? (
-                    <div style={{ color: '#9CA3AF', fontSize: 13 }}>No live disruption data available right now.</div>
+                    <div style={{ color: '#9CA3AF', fontSize: 13 }}>{t('dash.noDisruption', 'No live disruption data available right now.')}</div>
                   ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                       {triggerEntries.map(([key, value]) => (
@@ -181,22 +183,22 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #FF6B35, #FFB347)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>!</div>
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 700 }}>Simulate Disruption</div>
-                    <div style={{ fontSize: 13, color: '#5A6478' }}>Run the full automated claim pipeline with the current backend logic.</div>
+                    <div style={{ fontSize: 16, fontWeight: 700 }}>{t('dash.simulateTitle', 'Simulate Disruption')}</div>
+                    <div style={{ fontSize: 13, color: '#5A6478' }}>{t('dash.simulateDesc', 'Run the full automated claim pipeline with the current backend logic.')}</div>
                   </div>
                 </div>
                 <button className="btn-blue" onClick={handleSimulate} disabled={simulating || !policy} style={{ width: 'auto' }}>
-                  {simulating ? 'Processing...' : 'Simulate Rain Claim'}
+                  {simulating ? t('dash.processing', 'Processing...') : t('dash.simulateBtn', 'Simulate Rain Claim')}
                 </button>
               </div>
 
               <div className="card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700 }}>Recent Claims</div>
-                  <button style={{ background: 'none', color: '#0B3D91', padding: 0, fontSize: 13 }} onClick={() => navigate('/claims')}>View all -&gt;</button>
+                  <div style={{ fontSize: 16, fontWeight: 700 }}>{t('dash.recentClaims', 'Recent Claims')}</div>
+                  <button style={{ background: 'none', color: '#0B3D91', padding: 0, fontSize: 13 }} onClick={() => navigate('/claims')}>{t('dash.viewAll', 'View all →')}</button>
                 </div>
                 {claims.length === 0 ? (
-                  <div style={{ color: '#9CA3AF', fontSize: 13 }}>No claims yet.</div>
+                  <div style={{ color: '#9CA3AF', fontSize: 13 }}>{t('dash.noClaims', 'No claims yet.')}</div>
                 ) : claims.map((claim) => (
                   <div key={claim._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F0F0F0' }}>
                     <div>
@@ -213,21 +215,21 @@ export default function Dashboard() {
             </div>
 
             <div className="card">
-              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Work Schedule</div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{t('dash.workSchedule', 'Work Schedule')}</div>
               <div className="field">
-                <label className="label">Working Hours</label>
+                <label className="label">{t('dash.workingHours', 'Working Hours')}</label>
                 <select value={scheduleForm.workingHours} onChange={(e) => applyWorkingHoursPreset(e.target.value)}>
-                  <option value="part">Part-time (4-6 hrs/day)</option>
-                  <option value="full">Full-time (8-12 hrs/day)</option>
-                  <option value="extended">Extended (12-16 hrs/day)</option>
+                  <option value="part">{t('dash.partTime', 'Part-time (4-6 hrs/day)')}</option>
+                  <option value="full">{t('dash.fullTime', 'Full-time (8-12 hrs/day)')}</option>
+                  <option value="extended">{t('dash.extended', 'Extended (12-16 hrs/day)')}</option>
                 </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="field"><label className="label">Shift Start</label><input type="time" value={scheduleForm.usualShiftStart} onChange={(e) => setScheduleForm((current) => ({ ...current, usualShiftStart: e.target.value }))} /></div>
-                <div className="field"><label className="label">Shift End</label><input type="time" value={scheduleForm.usualShiftEnd} onChange={(e) => setScheduleForm((current) => ({ ...current, usualShiftEnd: e.target.value }))} /></div>
+                <div className="field"><label className="label">{t('dash.shiftStart', 'Shift Start')}</label><input type="time" value={scheduleForm.usualShiftStart} onChange={(e) => setScheduleForm((current) => ({ ...current, usualShiftStart: e.target.value }))} /></div>
+                <div className="field"><label className="label">{t('dash.shiftEnd', 'Shift End')}</label><input type="time" value={scheduleForm.usualShiftEnd} onChange={(e) => setScheduleForm((current) => ({ ...current, usualShiftEnd: e.target.value }))} /></div>
               </div>
               <div className="field">
-                <label className="label">Working Days</label>
+                <label className="label">{t('dash.workingDays', 'Working Days')}</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {WEEK_DAYS.map((day) => {
                     const selected = scheduleForm.workingDays.includes(day.value);
@@ -238,7 +240,7 @@ export default function Dashboard() {
                 </div>
               </div>
               {profileMessage && <div style={{ fontSize: 12, color: profileMessage.includes('updated') ? '#00A86B' : '#E53935', marginBottom: 10 }}>{profileMessage}</div>}
-              <button className="btn-primary" onClick={handleSaveSchedule} disabled={savingProfile}>{savingProfile ? 'Saving...' : 'Save Schedule'}</button>
+              <button className="btn-primary" onClick={handleSaveSchedule} disabled={savingProfile}>{savingProfile ? t('dash.saving', 'Saving...') : t('dash.saveSchedule', 'Save Schedule')}</button>
             </div>
           </div>
         </div>

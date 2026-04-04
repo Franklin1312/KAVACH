@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../../components/common/Navbar';
+import { useLanguage } from '../../context/LanguageContext';
 import { getAllClaims, simulateTrigger, autoProcessClaim, getActivePolicty } from '../../services/api';
 
 const RUPEE = '\u20B9';
@@ -61,6 +62,7 @@ function WindowDetails({ summary, methodology }) {
 
 export default function ClaimsPage() {
   const [claims, setClaims] = useState([]);
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [simulating, setSimulating] = useState(false);
   const [selected, setSelected] = useState('rain');
@@ -105,13 +107,13 @@ export default function ClaimsPage() {
       <Navbar />
       <div style={{ background: '#F5F7FA', minHeight: 'calc(100vh - 64px)' }}>
         <div className="page-container">
-          <h1 className="page-title">Claims</h1>
-          <p className="page-subtitle">Automated income protection payouts</p>
+          <h1 className="page-title">{t('claims.title', 'Claims')}</h1>
+          <p className="page-subtitle">{t('claims.subtitle', 'Automated income protection payouts')}</p>
 
           <div className="card" style={{ marginBottom: 24, border: '1px solid #D0DCEF' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
               <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg, #0B3D91, #2E7DD6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>T</div>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>Disruption Simulator</div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>{t('claims.simulator', 'Disruption Simulator')}</div>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
               {TRIGGER_TYPES.map((trigger) => {
@@ -121,12 +123,12 @@ export default function ClaimsPage() {
                 );
               })}
             </div>
-            <button className="btn-blue" onClick={handleSimulate} disabled={simulating} style={{ width: 'auto' }}>{simulating ? 'Processing pipeline...' : 'Fire Trigger →'}</button>
+            <button className="btn-blue" onClick={handleSimulate} disabled={simulating} style={{ width: 'auto' }}>{simulating ? t('claims.processingPipeline', 'Processing pipeline...') : t('claims.fireTrigger', 'Fire Trigger →')}</button>
           </div>
 
           {lastResult && (
             <div className="card" style={{ marginBottom: 24, border: '2px solid #00A86B' }}>
-              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: '#00A86B' }}>Claim Processed</div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: '#00A86B' }}>{t('claims.processed', 'Claim Processed')}</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 {[
                   ['Predicted loss', formatCurrency(lastResult.breakdown?.predictedLoss)],
@@ -150,9 +152,9 @@ export default function ClaimsPage() {
           )}
 
           <div className="card">
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Claims History</div>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>{t('claims.history', 'Claims History')}</div>
             {claims.length === 0 ? (
-              <div style={{ textAlign: 'center', color: '#9CA3AF', padding: '32px 0', fontSize: 14 }}>No claims yet. Simulate a disruption above to see the pipeline in action.</div>
+              <div style={{ textAlign: 'center', color: '#9CA3AF', padding: '32px 0', fontSize: 14 }}>{t('claims.noClaims', 'No claims yet. Simulate a disruption above to see the pipeline in action.')}</div>
             ) : claims.map((claim) => {
               const statusColor = STATUS_COLORS[claim.payoutStatus] || STATUS_COLORS.pending;
               return (
