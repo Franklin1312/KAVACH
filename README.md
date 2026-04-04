@@ -767,5 +767,6 @@ A genuine worker stranded in the same zone passes all signals naturally without 
 
 ---
 
-**Prototype:** [(https://kavach-sage.vercel.app/)]
-**Demo Video:** [https://drive.google.com/drive/folders/15QooszWazdxGJhgMfVfFb2STf7PS5G2z]
+**Phase 2 Prototype:** [(https://kavach-sage-iota.vercel.app/)]
+**Phase 1 Demo Video:** [https://drive.google.com/drive/folders/15QooszWazdxGJhgMfVfFb2STf7PS5G2z]
+**Phase 2 Demo Video:** [https://drive.google.com/drive/folders/15QooszWazdxGJhgMfVfFb2STf7PS5G2z]
