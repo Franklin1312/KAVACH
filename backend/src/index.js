@@ -19,6 +19,7 @@ app.use('/api/policies', require('./routes/policies'));
 app.use('/api/claims', require('./routes/claims'));
 app.use('/api/triggers', require('./routes/triggers'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/webhooks', require('./routes/webhooks'));
 
 app.get('/health', (req, res) =>
   res.json({ status: 'ok', service: 'kavach-api', env: process.env.NODE_ENV })

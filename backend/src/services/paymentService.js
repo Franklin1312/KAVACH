@@ -5,9 +5,14 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// When ENABLE_MOCK=true, all Razorpay calls return fake success responses.
+// Set ENABLE_MOCK=false to hit the real Razorpay Sandbox/Live API.
+const isMockMode = () => process.env.ENABLE_MOCK === 'true';
+
 // ─── Create UPI AutoPay subscription for weekly premium ───────────────────────
 async function createPremiumSubscription(worker, weeklyAmount) {
-  if (process.env.NODE_ENV === 'development') {
+  if (isMockMode()) {
+    console.log(`[MOCK] Premium subscription created for ${worker.name}: ₹${weeklyAmount}/week`);
     return { id: `mock_sub_${Date.now()}`, status: 'created', mock: true };
   }
   try {
@@ -28,8 +33,8 @@ async function createPremiumSubscription(worker, weeklyAmount) {
 
 // ─── Process payout with rollback logic ───────────────────────────────────────
 async function processPayout(worker, amount, claimId) {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`💸 Mock payout: ₹${amount} → ${worker.upiId || 'no-upi'} (claim: ${claimId})`);
+  if (isMockMode()) {
+    console.log(`[MOCK] Payout: ₹${amount} → ${worker.upiId || 'no-upi'} (claim: ${claimId})`);
     return { id: `mock_payout_${Date.now()}`, status: 'processed', mock: true };
   }
 

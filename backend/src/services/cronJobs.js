@@ -161,6 +161,60 @@ function startAllCrons() {
   scheduleWeeklyRenewal();
   scheduleTriggerMonitor();
   scheduleDailyCleanup();
+  scheduleWorkerBaselineUpdate();
+}
+
+// ─── Job 4: Every Monday 01:00 — update per-worker behavioral baselines ───────
+// Computes rolling 4-week avg orders/hour and earnings/hour for each worker
+// from their claim history. Used by the velocity anomaly fraud layer.
+function scheduleWorkerBaselineUpdate() {
+  cron.schedule('0 1 * * 1', async () => {
+    console.log('📊 [CRON] Updating worker behavioral baselines...');
+    try {
+      const Claim = require('../models/Claim');
+      const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000);
+
+      const workers = await Worker.find({ isVerified: true, isActive: true });
+      let updated = 0;
+
+      for (const worker of workers) {
+        const claims = await Claim.find({
+          worker: worker._id,
+          payoutStatus: { $in: ['approved', 'paid'] },
+          createdAt: { $gte: fourWeeksAgo },
+        }).select('predictedLoss disruptionStart disruptionEnd');
+
+        // Need at least 3 claims for a meaningful baseline
+        if (claims.length < 3) continue;
+
+        let totalHours = 0;
+        let totalEarnings = 0;
+
+        for (const claim of claims) {
+          const hours = Math.max(0.5,
+            (new Date(claim.disruptionEnd) - new Date(claim.disruptionStart)) / (1000 * 60 * 60)
+          );
+          totalHours += hours;
+          totalEarnings += (claim.predictedLoss || 0);
+        }
+
+        if (totalHours > 0) {
+          await Worker.findByIdAndUpdate(worker._id, {
+            avgEarningsPerHour: Math.round((totalEarnings / totalHours) * 100) / 100,
+            avgOrdersPerHour: Math.round((claims.length / totalHours) * 100) / 100,
+            lastBaselineUpdate: new Date(),
+          });
+          updated++;
+        }
+      }
+
+      console.log(`✅ [CRON] Updated baselines for ${updated} workers`);
+    } catch (err) {
+      console.error('❌ [CRON] Baseline update error:', err.message);
+    }
+  }, { timezone: 'Asia/Kolkata' });
+
+  console.log('📊 Worker baseline update cron scheduled (Monday 01:00 IST)');
 }
 
 module.exports = { startAllCrons };

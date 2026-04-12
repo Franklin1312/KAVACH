@@ -53,6 +53,11 @@ const WorkerSchema = new mongoose.Schema(
     fraudScore:      { type: Number, default: 0 },
     claimsFreeWeeks: { type: Number, default: 0 },
 
+    // Per-worker behavioral baseline (updated weekly by cron)
+    avgOrdersPerHour:   { type: Number, default: null },
+    avgEarningsPerHour: { type: Number, default: null },
+    lastBaselineUpdate: { type: Date },
+
     otp:       { type: String },
     otpExpiry: { type: Date },
     isVerified: { type: Boolean, default: false },

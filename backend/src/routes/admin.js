@@ -6,6 +6,7 @@ const Claim    = require('../models/Claim');
 const AuditLog = require('../models/AuditLog');
 const { processPayout }          = require('../services/paymentService');
 const { notifyClaimAutoApproved, notifyClaimManualReview } = require('../services/notificationService');
+const { getCityDisruptionProfile, getHistoricalRisk } = require('../services/historicalDisruption');
 
 // ─── GET /api/admin/stats ─────────────────────────────────────────────────────
 router.get('/stats', async (req, res) => {
@@ -197,7 +198,7 @@ router.put('/claims/:id/reject', async (req, res) => {
 });
 
 // ─── POST /api/admin/stress-test ──────────────────────────────────────────────
-// Simulate 14-day monsoon — project BCR impact
+// Simulate monsoon scenario — project BCR impact with reinsurance modelling
 router.post('/stress-test', async (req, res) => {
   try {
     const { days = 14, triggerType = 'rain', affectedPct = 0.7 } = req.body;
@@ -220,17 +221,37 @@ router.post('/stress-test', async (req, res) => {
     const payoutPerWorkerDay = avgDailyIncome * avgCoveragePct * levelMultiplier;
     const totalProjectedPayout = affectedCount * payoutPerWorkerDay * days;
 
-    // Current premiums collected
+    // Projected premiums for the same period (not just historical)
+    // Weekly premium per worker × (days / 7) weeks × all active workers
+    const avgWeeklyPremium = activePolicies.reduce((sum, p) => {
+      return sum + (p.premium?.finalAmount || 0);
+    }, 0) / (totalPolicies || 1);
+    const projectedPremiums = avgWeeklyPremium * (days / 7) * totalPolicies;
+
+    // Historical premiums (all-time)
     const premiumData     = await Policy.aggregate([{ $group: { _id: null, total: { $sum: '$premium.finalAmount' } } }]);
-    const totalPremiums   = premiumData[0]?.total || 0;
+    const totalHistoricalPremiums = premiumData[0]?.total || 0;
+
+    // Total premium pool = historical + projected incoming during the event
+    const totalPremiumPool = totalHistoricalPremiums + projectedPremiums;
 
     // Existing payouts
     const payoutData      = await Claim.aggregate([{ $match: { payoutStatus: 'paid' } }, { $group: { _id: null, total: { $sum: '$payoutAmount' } } }]);
     const existingPayouts = payoutData[0]?.total || 0;
 
-    const projectedTotalPayouts = existingPayouts + totalProjectedPayout;
-    const projectedBCR          = totalPremiums > 0 ? projectedTotalPayouts / totalPremiums : 0;
-    const willSuspend            = projectedBCR > 0.85;
+    // --- Without reinsurance ---
+    const grossProjectedPayouts = existingPayouts + totalProjectedPayout;
+    const grossBCR = totalPremiumPool > 0 ? grossProjectedPayouts / totalPremiumPool : 0;
+
+    // --- With reinsurance (excess-of-loss treaty) ---
+    // Reinsurer absorbs 60% of catastrophic payouts above the retention threshold
+    const retentionThreshold = totalPremiumPool * 0.50; // Platform retains first 50% of premium pool
+    const excessPayouts = Math.max(0, grossProjectedPayouts - retentionThreshold);
+    const reinsurerAbsorbs = excessPayouts * 0.60; // Reinsurer covers 60% of excess
+    const netProjectedPayouts = grossProjectedPayouts - reinsurerAbsorbs;
+    const netBCR = totalPremiumPool > 0 ? netProjectedPayouts / totalPremiumPool : 0;
+
+    const willSuspend = netBCR > 0.85;
 
     res.json({
       success: true,
@@ -242,15 +263,182 @@ router.post('/stress-test', async (req, res) => {
         projectedAffectedWorkers: affectedCount,
         avgDailyIncomePerWorker: Math.round(avgDailyIncome),
         payoutPerWorkerPerDay:   Math.round(payoutPerWorkerDay),
-        totalProjectedPayout:    Math.round(totalProjectedPayout),
-        currentPremiums:         Math.round(totalPremiums),
-        projectedBCR:            parseFloat((projectedBCR * 100).toFixed(1)) + '%',
+
+        // Gross (without reinsurance)
+        totalProjectedPayout:    Math.round(grossProjectedPayouts),
+        currentPremiums:         Math.round(totalPremiumPool),
+        grossBCR:                parseFloat((grossBCR * 100).toFixed(1)) + '%',
+
+        // Net (with reinsurance)
+        reinsurerAbsorbs:        Math.round(reinsurerAbsorbs),
+        netProjectedPayout:      Math.round(netProjectedPayouts),
+        projectedBCR:            parseFloat((netBCR * 100).toFixed(1)) + '%',
+
         willTriggerSuspension:   willSuspend,
         recommendation:          willSuspend
-          ? `⚠️ BCR will exceed 85% — suspend new enrolments and alert reinsurer`
-          : `✅ BCR stays within target — platform remains solvent`,
+          ? `BCR will exceed 85% even with reinsurance — suspend new enrolments and activate catastrophe protocol`
+          : `Platform remains solvent — reinsurer absorbs excess risk. Continue normal operations.`,
       },
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── GET /api/admin/sustainability ────────────────────────────────────────────
+// Business sustainability metrics: premium trends, P2P ratio, break-even, reinsurer triggers
+router.get('/sustainability', async (req, res) => {
+  try {
+    // 8-week timeseries of premiums and payouts
+    const eightWeeksAgo = new Date(Date.now() - 56 * 24 * 60 * 60 * 1000);
+    const weeklyPremiums = await Policy.aggregate([
+      { $match: { createdAt: { $gte: eightWeeksAgo } } },
+      { $group: {
+        _id: { $dateToString: { format: '%Y-%U', date: '$createdAt' } },
+        premiums: { $sum: '$premium.finalAmount' },
+        workerCount: { $addToSet: '$worker' },
+      }},
+      { $project: {
+        _id: 1,
+        premiums: 1,
+        workerCount: { $size: '$workerCount' },
+      }},
+      { $sort: { _id: 1 } },
+    ]);
+
+    const weeklyPayouts = await Claim.aggregate([
+      { $match: { createdAt: { $gte: eightWeeksAgo }, payoutStatus: { $in: ['paid', 'approved'] } } },
+      { $group: {
+        _id: { $dateToString: { format: '%Y-%U', date: '$createdAt' } },
+        payouts: { $sum: '$payoutAmount' },
+        claimCount: { $sum: 1 },
+      }},
+      { $sort: { _id: 1 } },
+    ]);
+
+    // Merge into weekly trend
+    const payoutMap = {};
+    weeklyPayouts.forEach(w => { payoutMap[w._id] = w; });
+
+    const weeklyTrend = weeklyPremiums.map(w => {
+      const payoutData = payoutMap[w._id] || { payouts: 0, claimCount: 0 };
+      const ratio = w.premiums > 0 ? payoutData.payouts / w.premiums : 0;
+      return {
+        week: w._id,
+        premiums: Math.round(w.premiums),
+        payouts: Math.round(payoutData.payouts),
+        ratio: parseFloat(ratio.toFixed(4)),
+        workerCount: w.workerCount,
+        claimCount: payoutData.claimCount,
+        premiumPerWorker: w.workerCount > 0 ? Math.round(w.premiums / w.workerCount) : 0,
+      };
+    });
+
+    // Rolling 4-week P2P ratio
+    const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000);
+    const [premiums4w] = await Policy.aggregate([
+      { $match: { createdAt: { $gte: fourWeeksAgo } } },
+      { $group: { _id: null, total: { $sum: '$premium.finalAmount' } } },
+    ]);
+    const [payouts4w] = await Claim.aggregate([
+      { $match: { createdAt: { $gte: fourWeeksAgo }, payoutStatus: { $in: ['paid', 'approved'] } } },
+      { $group: { _id: null, total: { $sum: '$payoutAmount' } } },
+    ]);
+
+    const totalPremiums4w = premiums4w?.total || 0;
+    const totalPayouts4w = payouts4w?.total || 0;
+    const payoutToPremiumRatio4w = totalPremiums4w > 0 ? totalPayouts4w / totalPremiums4w : 0;
+
+    // Current portfolio stats
+    const currentWorkerCount = await Worker.countDocuments({ isVerified: true });
+    const currentActivePolicies = await Policy.countDocuments({ status: 'active' });
+    const [allPremiums] = await Policy.aggregate([{ $group: { _id: null, total: { $sum: '$premium.finalAmount' } } }]);
+    const [allPayouts] = await Claim.aggregate([
+      { $match: { payoutStatus: { $in: ['paid', 'approved'] } } },
+      { $group: { _id: null, total: { $sum: '$payoutAmount' } } },
+    ]);
+
+    const totalPrem = allPremiums?.total || 0;
+    const totalPay = allPayouts?.total || 0;
+
+    // Break-even projections at various portfolio sizes
+    const avgPremiumPerWorker = currentWorkerCount > 0 ? totalPrem / currentWorkerCount : 50;
+    const avgPayoutPerWorker = currentWorkerCount > 0 ? totalPay / currentWorkerCount : 30;
+    const netPerWorker = avgPremiumPerWorker - avgPayoutPerWorker;
+
+    const breakEvenProjections = {
+      current: {
+        portfolioSize: currentWorkerCount,
+        premiums: Math.round(totalPrem),
+        payouts: Math.round(totalPay),
+        net: Math.round(totalPrem - totalPay),
+      },
+      at500: {
+        portfolioSize: 500,
+        premiums: Math.round(avgPremiumPerWorker * 500),
+        payouts: Math.round(avgPayoutPerWorker * 500),
+        net: Math.round(netPerWorker * 500),
+      },
+      at1000: {
+        portfolioSize: 1000,
+        premiums: Math.round(avgPremiumPerWorker * 1000),
+        payouts: Math.round(avgPayoutPerWorker * 1000),
+        net: Math.round(netPerWorker * 1000),
+      },
+      at5000: {
+        portfolioSize: 5000,
+        premiums: Math.round(avgPremiumPerWorker * 5000),
+        payouts: Math.round(avgPayoutPerWorker * 5000),
+        net: Math.round(netPerWorker * 5000),
+      },
+    };
+
+    // Reinsurer trigger thresholds
+    const currentBCR = totalPrem > 0 ? totalPay / totalPrem : 0;
+    const singleEventMax = await Claim.aggregate([
+      { $match: { payoutStatus: { $in: ['paid', 'approved'] } } },
+      { $group: { _id: '$triggerType', total: { $sum: '$payoutAmount' } } },
+      { $sort: { total: -1 } },
+      { $limit: 1 },
+    ]);
+    const singleEventLimit = totalPrem * 0.40; // 40% of premiums cap per event type
+
+    const reinsurerTriggers = {
+      bcrThreshold85: currentBCR > 0.85,
+      bcrCurrent: parseFloat((currentBCR * 100).toFixed(1)),
+      singleEventCap: {
+        current: Math.round(singleEventMax[0]?.total || 0),
+        limit: Math.round(singleEventLimit),
+        percentage: singleEventLimit > 0
+          ? parseFloat(((singleEventMax[0]?.total || 0) / singleEventLimit * 100).toFixed(1))
+          : 0,
+        triggerType: singleEventMax[0]?._id || 'none',
+      },
+    };
+
+    res.json({
+      success: true,
+      weeklyTrend,
+      payoutToPremiumRatio4w: parseFloat(payoutToPremiumRatio4w.toFixed(4)),
+      breakEvenProjections,
+      reinsurerTriggers,
+      premiumPerWorkerPerWeek: weeklyTrend.map(w => ({
+        week: w.week,
+        premiumPerWorker: w.premiumPerWorker,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── GET /api/admin/historical-risk/:city ─────────────────────────────────────
+// Returns the 12-month disruption profile for a city
+router.get('/historical-risk/:city', async (req, res) => {
+  try {
+    const city = req.params.city.toLowerCase().trim();
+    const profile = getCityDisruptionProfile(city);
+    res.json({ success: true, city, profile });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -50,6 +50,31 @@ async function calculateFraudScore(worker, policy, claimData) {
     flags.push('ELEVATED_CLAIM_FREQUENCY');
   }
 
+  // ─── Layer 4.5: Per-Worker Velocity Anomaly ───────────────────────────────
+  // Compare the current claim's predicted hourly earnings against the
+  // worker's own 4-week rolling average. Flags claims where the predicted
+  // loss rate is suspiciously high relative to the worker's personal baseline.
+  if (worker.avgEarningsPerHour && worker.avgEarningsPerHour > 0) {
+    const claimWindowHours = claimData.windowHours ||
+      ((claimData.disruptionEnd && claimData.disruptionStart)
+        ? (new Date(claimData.disruptionEnd) - new Date(claimData.disruptionStart)) / (1000 * 60 * 60)
+        : 2);
+    const claimHourlyRate = (claimData.predictedLoss || 0) / Math.max(0.5, claimWindowHours);
+    const velocityRatio = claimHourlyRate / worker.avgEarningsPerHour;
+
+    if (velocityRatio > 2.5) {
+      score += 20;
+      flags.push('VELOCITY_ANOMALY_SEVERE');
+    } else if (velocityRatio > 2.0) {
+      score += 15;
+      flags.push('VELOCITY_ANOMALY');
+    } else if (velocityRatio > 1.7) {
+      score += 5;
+      flags.push('VELOCITY_ELEVATED');
+    }
+  }
+  // Workers with null baseline (cold start, <3 claims) skip this layer
+
   // ─── Layer 5: Duplicate Claim Prevention ──────────────────────────────────
   // No two claims for the same trigger window
   const duplicateClaim = await Claim.findOne({

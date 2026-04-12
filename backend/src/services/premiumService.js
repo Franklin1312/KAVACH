@@ -51,13 +51,24 @@ function getClaimsFreeDiscount(claimsFreeWeeks) {
   return 0;
 }
 
-// Surge loading based on weather forecast risk (mock — Phase 3 will use real 7-day forecast)
+// Surge loading calibrated from IMD historical disruption data
+// Uses trigger probability per city per season instead of flat rules
 function getSurgeLoading(city, zoneRiskFactor) {
-  // High risk zone in monsoon season gets surge loading
+  const { getSeasonalTriggerProbability } = require('./historicalDisruption');
+  const triggerProb = getSeasonalTriggerProbability(city);
   const seasonMultiplier = getSeasonMultiplier(city);
-  if (zoneRiskFactor >= 1.3 && seasonMultiplier >= 1.45) return 14;
-  if (zoneRiskFactor >= 1.3 || seasonMultiplier >= 1.45) return 8;
-  return 0;
+
+  // Scale surge loading by historical trigger probability
+  // Base: ₹0 at 0% trigger probability, up to ₹20 at 50%+ probability
+  const baseSurge = Math.round(triggerProb * 40);
+
+  // Zone risk factor amplifies surge for high-risk zones
+  const zoneAmplifier = zoneRiskFactor >= 1.3 ? 1.5 : zoneRiskFactor >= 1.0 ? 1.0 : 0.7;
+
+  // Season factor for extreme months
+  const seasonAmplifier = seasonMultiplier >= 1.45 ? 1.3 : 1.0;
+
+  return Math.min(20, Math.round(baseSurge * zoneAmplifier * seasonAmplifier));
 }
 
 // ─── Main calculation function ─────────────────────────────────────────────────

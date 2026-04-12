@@ -204,7 +204,7 @@ def train(data_path: str):
     mae  = mean_absolute_error(y, final_pred)
     rmse = np.sqrt(mean_squared_error(y, final_pred))
     r2   = r2_score(y, final_pred)
-    mape = np.mean(np.abs((y-final_pred)/(y+1e-6)))*100
+    mape = np.mean(np.abs((y - final_pred) / np.clip(y, 1.0, None))) * 100
 
     print(f"\n── OOF Metrics ─────────────────────────────")
     print(f"  MAE  : ₹{mae:.2f}")

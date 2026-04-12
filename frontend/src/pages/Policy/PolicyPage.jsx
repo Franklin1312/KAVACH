@@ -44,9 +44,45 @@ export default function PolicyPage() {
     setLoading(true);
     try {
       const { data } = await createPolicy(selectedTier);
-      setPolicy(data.policy);
-      const historyResponse = await getAllPolicies();
-      setHistory(historyResponse.data.policies || []);
+
+      // If backend returned a Razorpay order, launch the checkout popup
+      if (data.razorpayOrder) {
+        const options = {
+          key:         data.razorpayOrder.keyId,
+          amount:      data.razorpayOrder.amount,
+          currency:    data.razorpayOrder.currency,
+          order_id:    data.razorpayOrder.orderId,
+          name:        'KAVACH',
+          description: `${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} Weekly Premium`,
+          image:       '',
+          theme:       { color: '#0B3D91' },
+          prefill: {
+            contact: localStorage.getItem('kavach_phone') || '',
+          },
+          handler: function (response) {
+            // Payment successful — update UI
+            setPolicy(data.policy);
+            getAllPolicies().then(({ data: h }) => setHistory(h.policies || []));
+          },
+          modal: {
+            ondismiss: function () {
+              // User closed the popup without paying — policy still created but unpaid
+              setPolicy(data.policy);
+              getAllPolicies().then(({ data: h }) => setHistory(h.policies || []));
+            },
+          },
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (resp) {
+          setError(`Payment failed: ${resp.error.description}`);
+        });
+        rzp.open();
+      } else {
+        // Mock mode — no checkout popup, policy is instantly active
+        setPolicy(data.policy);
+        const historyResponse = await getAllPolicies();
+        setHistory(historyResponse.data.policies || []);
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to activate policy');
     } finally {

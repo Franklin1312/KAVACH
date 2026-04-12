@@ -95,6 +95,28 @@ router.post('/', protect, async (req, res) => {
     // Create Razorpay subscription
     const subscription = await createPremiumSubscription(worker, finalAmount).catch(() => ({ id: null }));
 
+    // Create a Razorpay Order for the frontend checkout popup
+    const Razorpay = require('razorpay');
+    const isMock = process.env.ENABLE_MOCK === 'true';
+    let razorpayOrder = null;
+
+    if (!isMock) {
+      try {
+        const rzp = new Razorpay({
+          key_id:     process.env.RAZORPAY_KEY_ID,
+          key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+        razorpayOrder = await rzp.orders.create({
+          amount:   Math.round(finalAmount * 100), // paise
+          currency: 'INR',
+          receipt:  `kavach_${Date.now()}`,
+          notes:    { worker_id: worker._id.toString(), tier: selectedTier },
+        });
+      } catch (orderErr) {
+        console.error('Razorpay order creation failed:', orderErr.message);
+      }
+    }
+
     const policy = await Policy.create({
       worker: worker._id, tier: selectedTier, coveragePct,
       premium: {
@@ -108,7 +130,7 @@ router.post('/', protect, async (req, res) => {
       },
       weekStart, weekEnd, maxPayout, status: 'active',
       razorpaySubscriptionId: subscription?.id,
-      premiumPaid: Boolean(subscription?.mock),
+      premiumPaid: isMock ? true : false, // Will be set true via webhook or checkout handler
     });
 
     // WhatsApp notification
@@ -119,7 +141,17 @@ router.post('/', protect, async (req, res) => {
       meta: { policyId: policy._id, tier: selectedTier, finalAmount, maxPayout },
     });
 
-    res.status(201).json({ success: true, policy });
+    res.status(201).json({
+      success: true,
+      policy,
+      // Frontend uses these to launch Razorpay Checkout
+      razorpayOrder: razorpayOrder ? {
+        orderId: razorpayOrder.id,
+        amount:  razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        keyId:   process.env.RAZORPAY_KEY_ID,
+      } : null,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

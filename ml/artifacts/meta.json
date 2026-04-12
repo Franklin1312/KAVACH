@@ -51,10 +51,10 @@
   "oof_mae": 16.7745,
   "oof_rmse": 27.1738,
   "oof_r2": 0.9874,
-  "oof_mape": 12286547.1323,
+  "oof_mape": 30.0019,
   "residual_std": 21.6398,
   "n_samples": 60000,
-  "trained_at": "2026-04-03T12:23:09.297480",
+  "trained_at": "2026-04-12T05:25:56.531509",
   "version": "v2-delivery-time-integration",
   "data_sources": [
     "Kaggle food-delivery schema (Weatherconditions, Road_traffic_density, Time_taken_min, City, Festival, multiple_deliveries)",

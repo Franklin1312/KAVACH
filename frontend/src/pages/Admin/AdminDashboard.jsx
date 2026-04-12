@@ -1,7 +1,8 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAdminStats, getAdminClaims, getAdminWorkers } from '../../services/adminApi';
+import { getAdminStats, getAdminClaims, getAdminWorkers, getAdminSustainability } from '../../services/adminApi';
 import axios from 'axios';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Cell, ComposedChart, Legend } from 'recharts';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const RUPEE = '\u20B9';
@@ -34,6 +35,8 @@ export default function AdminDashboard() {
   const [stress, setStress] = useState(null);
   const [stressLoading, setStressLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState({});
+  const [sustainability, setSustainability] = useState(null);
+  const [sustainLoading, setSustainLoading] = useState(false);
 
   const token = localStorage.getItem('kavach_token');
   const headers = { Authorization: `Bearer ${token}` };
@@ -44,6 +47,7 @@ export default function AdminDashboard() {
       getAdminStats().then(({ data }) => setStats(data)),
       getAdminClaims().then(({ data }) => setClaims(data.claims || [])),
       getAdminWorkers().then(({ data }) => setWorkers(data.workers || [])),
+      getAdminSustainability().then(({ data }) => setSustainability(data)).catch(() => {}),
     ]).finally(() => setLoading(false));
   };
 
@@ -123,9 +127,9 @@ export default function AdminDashboard() {
         )}
 
         <div style={{ display: 'flex', gap: 4, marginBottom: 28, borderBottom: '2px solid #E5E7EB' }}>
-          {['overview', 'claims', 'workers', 'stress'].map((name) => (
+          {['overview', 'claims', 'workers', 'sustainability', 'stress'].map((name) => (
             <button key={name} onClick={() => setTab(name)} style={{ background: 'none', border: 'none', color: tab === name ? '#0B3D91' : '#9CA3AF', fontWeight: tab === name ? 700 : 500, padding: '10px 20px', borderBottom: tab === name ? '3px solid #0B3D91' : '3px solid transparent', borderRadius: 0, fontSize: 14, fontFamily: tab === name ? 'Outfit, sans-serif' : 'inherit' }}>
-              {name === 'stress' ? 'Stress Test' : name.charAt(0).toUpperCase() + name.slice(1)}
+              {name === 'stress' ? 'Stress Test' : name === 'sustainability' ? 'Sustainability' : name.charAt(0).toUpperCase() + name.slice(1)}
               {name === 'claims' && summary.pendingClaims > 0 && <span style={{ marginLeft: 6, background: '#FF6B35', color: '#fff', borderRadius: 10, fontSize: 10, padding: '2px 7px', fontWeight: 700 }}>{summary.pendingClaims}</span>}
             </button>
           ))}
@@ -235,20 +239,191 @@ export default function AdminDashboard() {
                 <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, color: stress.willTriggerSuspension ? '#E53935' : '#00A86B' }}>{stress.willTriggerSuspension ? 'Suspension Triggered' : 'Platform Solvent'}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 20 }}>
                   {[
-                    { label: 'Active policies', value: stress.totalActivePolicies },
-                    { label: 'Affected workers', value: stress.projectedAffectedWorkers },
                     { label: 'Avg daily income/worker', value: `${RUPEE}${stress.avgDailyIncomePerWorker}` },
-                    { label: 'Payout/worker/day', value: `${RUPEE}${stress.payoutPerWorkerPerDay}` },
-                    { label: 'Total projected payout', value: `${RUPEE}${stress.totalProjectedPayout?.toLocaleString('en-IN')}` },
-                    { label: 'Current premiums', value: `${RUPEE}${stress.currentPremiums?.toLocaleString('en-IN')}` },
-                  ].map((item) => <div key={item.label} style={{ background: '#F5F7FA', borderRadius: 12, padding: '14px 18px' }}><div style={{ color: '#9CA3AF', fontSize: 12, marginBottom: 4 }}>{item.label}</div><div style={{ fontWeight: 800, fontSize: 20, fontFamily: 'Outfit, sans-serif' }}>{item.value}</div></div>)}
+                    { label: 'Total premium pool', value: `${RUPEE}${stress.currentPremiums?.toLocaleString('en-IN')}` },
+                    { label: 'Gross payout projected', value: `${RUPEE}${stress.totalProjectedPayout?.toLocaleString('en-IN')}` },
+                    { label: 'Reinsurer absorbs (60% excess)', value: `${RUPEE}${stress.reinsurerAbsorbs?.toLocaleString('en-IN')}`, highlight: true },
+                    { label: 'Net payout to platform', value: `${RUPEE}${stress.netProjectedPayout?.toLocaleString('en-IN')}` },
+                    { label: 'Net BCR', value: stress.projectedBCR },
+                  ].map((item) => (
+                    <div key={item.label} style={{ background: item.highlight ? '#E8F5E9' : '#F5F7FA', borderRadius: 12, padding: '14px 18px', border: item.highlight ? '1px solid #4CAF50' : 'none' }}>
+                      <div style={{ color: item.highlight ? '#2E7D32' : '#9CA3AF', fontSize: 12, marginBottom: 4 }}>{item.label}</div>
+                      <div style={{ fontWeight: 800, fontSize: 20, color: item.highlight ? '#1B5E20' : '#111827', fontFamily: 'Outfit, sans-serif' }}>{item.value}</div>
+                    </div>
+                  ))}
                 </div>
                 <div style={{ background: stress.willTriggerSuspension ? '#FDEAEA' : '#E5F7EF', border: `1px solid ${stress.willTriggerSuspension ? '#E53935' : '#00A86B'}`, borderRadius: 12, padding: '18px 22px' }}>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: stress.willTriggerSuspension ? '#E53935' : '#00A86B', marginBottom: 6, fontFamily: 'Outfit, sans-serif' }}>Projected BCR: {stress.projectedBCR}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: stress.willTriggerSuspension ? '#E53935' : '#00A86B', fontFamily: 'Outfit, sans-serif' }}>
+                      Final Scenario BCR: {stress.projectedBCR}
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#F44336' }}>
+                      <del>Gross BCR: {stress.grossBCR}</del>
+                    </div>
+                  </div>
                   <div style={{ fontSize: 14, color: '#5A6478' }}>{stress.recommendation}</div>
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'sustainability' && (
+          <div>
+            {/* P2P Ratio Overview Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
+              {(() => {
+                const p2p = sustainability?.payoutToPremiumRatio4w || 0;
+                const p2pPct = (p2p * 100).toFixed(1);
+                const p2pColor = p2p > 0.85 ? '#E53935' : p2p > 0.70 ? '#F5A623' : '#00A86B';
+                const bep = sustainability?.breakEvenProjections?.current || {};
+                return [
+                  { label: '4-Week P2P Ratio', value: `${p2pPct}%`, color: p2pColor, sub: p2p > 0.85 ? 'CRITICAL' : p2p > 0.70 ? 'ELEVATED' : 'HEALTHY' },
+                  { label: 'Net Margin (Current)', value: `${RUPEE}${(bep.net || 0).toLocaleString('en-IN')}`, color: (bep.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: `${bep.portfolioSize || 0} workers` },
+                  { label: 'Projected at 1K Workers', value: `${RUPEE}${(sustainability?.breakEvenProjections?.at1000?.net || 0).toLocaleString('en-IN')}`, color: (sustainability?.breakEvenProjections?.at1000?.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: 'Net margin' },
+                  { label: 'Projected at 5K Workers', value: `${RUPEE}${(sustainability?.breakEvenProjections?.at5000?.net || 0).toLocaleString('en-IN')}`, color: (sustainability?.breakEvenProjections?.at5000?.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: 'Net margin' },
+                ].map((item) => (
+                  <div key={item.label} style={{ background: '#fff', borderRadius: 16, padding: 20, textAlign: 'center', border: `2px solid ${item.color}15`, boxShadow: `0 4px 16px ${item.color}10` }}>
+                    <div style={{ fontSize: 12, color: '#5A6478', marginBottom: 4 }}>{item.label}</div>
+                    <div style={{ fontSize: 30, fontWeight: 800, color: item.color, fontFamily: 'Outfit, sans-serif' }}>{item.value}</div>
+                    <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>{item.sub}</div>
+                  </div>
+                ));
+              })()}
+            </div>
+
+            {/* Charts Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+              {/* Premium vs Payout Weekly Trend */}
+              <div className="card">
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, fontFamily: 'Outfit, sans-serif' }}>Weekly Premium vs Payout Trend</div>
+                {sustainability?.weeklyTrend?.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <ComposedChart data={sustainability.weeklyTrend} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
+                      <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#9CA3AF' }} />
+                      <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} />
+                      <Tooltip
+                        contentStyle={{ background: '#1A1A2E', border: 'none', borderRadius: 12, color: '#fff', fontSize: 12 }}
+                        formatter={(value, name) => [`${RUPEE}${value.toLocaleString('en-IN')}`, name === 'premiums' ? 'Premiums' : 'Payouts']}
+                      />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="premiums" fill="#0B3D91" radius={[4, 4, 0, 0]} name="Premiums" />
+                      <Bar dataKey="payouts" fill="#FF6B35" radius={[4, 4, 0, 0]} name="Payouts" />
+                      <Line type="monotone" dataKey="ratio" stroke="#E53935" strokeWidth={2} dot={{ r: 3 }} name="P2P Ratio" yAxisId={0} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                ) : <div style={{ color: '#9CA3AF', fontSize: 13, textAlign: 'center', padding: 40 }}>No weekly data yet</div>}
+              </div>
+
+              {/* Premium Per Worker Trend */}
+              <div className="card">
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, fontFamily: 'Outfit, sans-serif' }}>Premium Per Worker Per Week</div>
+                {sustainability?.premiumPerWorkerPerWeek?.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <AreaChart data={sustainability.premiumPerWorkerPerWeek} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="premGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#0B3D91" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#0B3D91" stopOpacity={0.02} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
+                      <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#9CA3AF' }} />
+                      <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} />
+                      <Tooltip
+                        contentStyle={{ background: '#1A1A2E', border: 'none', borderRadius: 12, color: '#fff', fontSize: 12 }}
+                        formatter={(value) => [`${RUPEE}${value}`, 'Per Worker']}
+                      />
+                      <Area type="monotone" dataKey="premiumPerWorker" stroke="#0B3D91" fill="url(#premGrad)" strokeWidth={2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : <div style={{ color: '#9CA3AF', fontSize: 13, textAlign: 'center', padding: 40 }}>No data yet</div>}
+              </div>
+            </div>
+
+            {/* Break-Even Projections */}
+            <div className="card" style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, fontFamily: 'Outfit, sans-serif' }}>Break-Even Projections at Various Portfolio Sizes</div>
+              {sustainability?.breakEvenProjections ? (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart
+                    data={[
+                      { name: `Current (${sustainability.breakEvenProjections.current.portfolioSize})`, ...sustainability.breakEvenProjections.current },
+                      { name: '500 Workers', ...sustainability.breakEvenProjections.at500 },
+                      { name: '1,000 Workers', ...sustainability.breakEvenProjections.at1000 },
+                      { name: '5,000 Workers', ...sustainability.breakEvenProjections.at5000 },
+                    ]}
+                    margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#5A6478' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} />
+                    <Tooltip
+                      contentStyle={{ background: '#1A1A2E', border: 'none', borderRadius: 12, color: '#fff', fontSize: 12 }}
+                      formatter={(value, name) => [`${RUPEE}${value.toLocaleString('en-IN')}`, name.charAt(0).toUpperCase() + name.slice(1)]}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="premiums" fill="#0B3D91" radius={[4, 4, 0, 0]} name="Premiums" />
+                    <Bar dataKey="payouts" fill="#FF6B35" radius={[4, 4, 0, 0]} name="Payouts" />
+                    <Bar dataKey="net" radius={[4, 4, 0, 0]} name="Net Margin">
+                      {[
+                        sustainability.breakEvenProjections.current,
+                        sustainability.breakEvenProjections.at500,
+                        sustainability.breakEvenProjections.at1000,
+                        sustainability.breakEvenProjections.at5000,
+                      ].map((entry, idx) => (
+                        <Cell key={idx} fill={entry.net >= 0 ? '#00A86B' : '#E53935'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : <div style={{ color: '#9CA3AF', fontSize: 13 }}>Loading projections...</div>}
+            </div>
+
+            {/* Reinsurer Triggers */}
+            <div className="card">
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, fontFamily: 'Outfit, sans-serif' }}>Reinsurer Trigger Indicators</div>
+              {sustainability?.reinsurerTriggers ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                  {/* BCR Threshold */}
+                  <div style={{ background: sustainability.reinsurerTriggers.bcrThreshold85 ? '#FDEAEA' : '#E5F7EF', borderRadius: 12, padding: '18px 22px', border: `1px solid ${sustainability.reinsurerTriggers.bcrThreshold85 ? '#E53935' : '#00A86B'}` }}>
+                    <div style={{ fontSize: 12, color: '#5A6478', marginBottom: 6 }}>BCR Threshold (85%)</div>
+                    <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: sustainability.reinsurerTriggers.bcrThreshold85 ? '#E53935' : '#00A86B' }}>
+                      {sustainability.reinsurerTriggers.bcrCurrent}%
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: sustainability.reinsurerTriggers.bcrThreshold85 ? '#E53935' : '#00A86B' }}>
+                      {sustainability.reinsurerTriggers.bcrThreshold85 ? 'BREACHED' : 'WITHIN LIMIT'}
+                    </div>
+                  </div>
+
+                  {/* Single Event Cap */}
+                  <div style={{ background: '#F5F7FA', borderRadius: 12, padding: '18px 22px', border: '1px solid #E5E7EB' }}>
+                    <div style={{ fontSize: 12, color: '#5A6478', marginBottom: 6 }}>Single Event Cap (40%)</div>
+                    <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: sustainability.reinsurerTriggers.singleEventCap.percentage > 90 ? '#E53935' : '#0B3D91' }}>
+                      {sustainability.reinsurerTriggers.singleEventCap.percentage}%
+                    </div>
+                    <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
+                      {RUPEE}{sustainability.reinsurerTriggers.singleEventCap.current.toLocaleString('en-IN')} / {RUPEE}{sustainability.reinsurerTriggers.singleEventCap.limit.toLocaleString('en-IN')}
+                    </div>
+                    <div style={{ height: 6, background: '#E5E7EB', borderRadius: 3, marginTop: 8 }}>
+                      <div style={{ height: 6, borderRadius: 3, width: `${Math.min(100, sustainability.reinsurerTriggers.singleEventCap.percentage)}%`, background: sustainability.reinsurerTriggers.singleEventCap.percentage > 90 ? '#E53935' : sustainability.reinsurerTriggers.singleEventCap.percentage > 70 ? '#F5A623' : '#00A86B', transition: 'width 0.5s ease' }} />
+                    </div>
+                  </div>
+
+                  {/* Top Trigger Type */}
+                  <div style={{ background: '#F5F7FA', borderRadius: 12, padding: '18px 22px', border: '1px solid #E5E7EB' }}>
+                    <div style={{ fontSize: 12, color: '#5A6478', marginBottom: 6 }}>Highest Payout Trigger</div>
+                    <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: '#0B3D91', textTransform: 'capitalize' }}>
+                      {TRIGGER_LABELS[sustainability.reinsurerTriggers.singleEventCap.triggerType] || sustainability.reinsurerTriggers.singleEventCap.triggerType || 'None'}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
+                      {RUPEE}{sustainability.reinsurerTriggers.singleEventCap.current.toLocaleString('en-IN')} total payouts
+                    </div>
+                  </div>
+                </div>
+              ) : <div style={{ color: '#9CA3AF', fontSize: 13 }}>No reinsurer data available</div>}
+            </div>
           </div>
         )}
       </div>
