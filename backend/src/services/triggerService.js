@@ -623,23 +623,32 @@ async function verifyTriggerForWorker(worker, requestedTriggerType) {
 }
 
 function buildSimulatedTrigger(triggerType, level = 3) {
-  const simulatedSource = withObservation({
+  // The disruption "just ended now" — most natural simulation behaviour.
+  // At 4:00 PM with a rain L3 (180 min), the window is 1:00 PM → 4:00 PM IST.
+  // calculateFinalLossWindow then intersects this with the worker's actual shift,
+  // e.g. if shift is 10:00 AM – 8:00 PM the overlap is 1:00 PM → 4:00 PM ✓.
+  const nowUTC = new Date();
+
+  const durationMinutes = DEFAULT_TRIGGER_WINDOWS[triggerType]?.[level] || 180;
+  const windowStart = new Date(nowUTC.getTime() - durationMinutes * 60 * 1000);
+
+  const simulatedSource = {
     triggered: true,
     level,
     source: `${triggerType} simulated`,
     value: 'Simulated trigger',
-  });
-  const window = deriveDisruptionWindow(triggerType, simulatedSource);
+    confirmedAt: nowUTC.toISOString(),
+  };
 
   return {
     anyTriggered: true,
     triggerType,
     triggerLevel: level,
     triggerSource: simulatedSource,
-    disruptionStart: window.disruptionStart,
-    disruptionEnd: window.disruptionEnd,
-    disruptionWindowMinutes: window.durationMinutes,
-    windowMethodology: window.methodology,
+    disruptionStart: windowStart,
+    disruptionEnd: nowUTC,
+    disruptionWindowMinutes: durationMinutes,
+    windowMethodology: `Simulated ${durationMinutes}min window ending now — intersected with your active shift.`,
   };
 }
 

@@ -22,6 +22,18 @@ function getShiftPreset(workingHours) {
   return { usualShiftStart: '10:00', usualShiftEnd: '20:00' };
 }
 
+// Convert "HH:MM" 24h string → "H:MM AM/PM IST"
+function to12h(timeStr) {
+  if (!timeStr) return '';
+  const [hStr, mStr] = timeStr.split(':');
+  let h = parseInt(hStr, 10);
+  const m = mStr || '00';
+  const period = h >= 12 ? 'PM' : 'AM';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return `${h}:${m} ${period} IST`;
+}
+
 function getTimeGreetingKey() {
   const hour = new Date().getHours();
   if (hour < 12) return 'dash.greeting.morning';
@@ -225,8 +237,16 @@ export default function Dashboard() {
                 </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="field"><label className="label">{t('dash.shiftStart', 'Shift Start')}</label><input type="time" value={scheduleForm.usualShiftStart} onChange={(e) => setScheduleForm((current) => ({ ...current, usualShiftStart: e.target.value }))} /></div>
-                <div className="field"><label className="label">{t('dash.shiftEnd', 'Shift End')}</label><input type="time" value={scheduleForm.usualShiftEnd} onChange={(e) => setScheduleForm((current) => ({ ...current, usualShiftEnd: e.target.value }))} /></div>
+                <div className="field">
+                  <label className="label">{t('dash.shiftStart', 'Shift Start')}</label>
+                  <input type="time" value={scheduleForm.usualShiftStart} onChange={(e) => setScheduleForm((current) => ({ ...current, usualShiftStart: e.target.value }))} />
+                  <div style={{ fontSize: 11, color: '#0B3D91', marginTop: 4, fontWeight: 600 }}>{to12h(scheduleForm.usualShiftStart)}</div>
+                </div>
+                <div className="field">
+                  <label className="label">{t('dash.shiftEnd', 'Shift End')}</label>
+                  <input type="time" value={scheduleForm.usualShiftEnd} onChange={(e) => setScheduleForm((current) => ({ ...current, usualShiftEnd: e.target.value }))} />
+                  <div style={{ fontSize: 11, color: '#0B3D91', marginTop: 4, fontWeight: 600 }}>{to12h(scheduleForm.usualShiftEnd)}</div>
+                </div>
               </div>
               <div className="field">
                 <label className="label">{t('dash.workingDays', 'Working Days')}</label>

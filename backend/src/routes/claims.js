@@ -48,11 +48,23 @@ function getWorkerShift(worker) {
   return { usualShiftStart: '10:00', usualShiftEnd: '20:00', workingDays: DEFAULT_WORKING_DAYS };
 }
 
+// IST = UTC+5:30
+const IST_OFFSET_MINUTES = 5 * 60 + 30; // 330 minutes
+
 function buildDateAtTime(baseDate, timeString) {
-  const date = new Date(baseDate);
   const { hours, minutes } = parseShiftTime(timeString, '10:00');
-  date.setHours(hours, minutes, 0, 0);
-  return date;
+  // Treat the shift time as IST (hours:minutes in IST)
+  // Convert to UTC: subtract IST offset (330 min)
+  const istMidnightUTC = new Date(baseDate);
+  // Get the IST calendar date (year/month/day in IST)
+  const istMs = istMidnightUTC.getTime() + IST_OFFSET_MINUTES * 60 * 1000;
+  const istDay = new Date(istMs);
+  const year  = istDay.getUTCFullYear();
+  const month = istDay.getUTCMonth();
+  const day   = istDay.getUTCDate();
+  // Build UTC timestamp for that IST clock time
+  const shiftUTC = Date.UTC(year, month, day, hours, minutes, 0, 0) - IST_OFFSET_MINUTES * 60 * 1000;
+  return new Date(shiftUTC);
 }
 
 function getOverlap(startA, endA, startB, endB) {
