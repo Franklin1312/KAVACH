@@ -14,6 +14,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/chat', require('./routes/chat'));
 app.use('/api/workers', require('./routes/workers'));
 app.use('/api/policies', require('./routes/policies'));
 app.use('/api/claims', require('./routes/claims'));

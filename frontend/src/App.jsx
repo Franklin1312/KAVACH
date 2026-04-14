@@ -8,6 +8,7 @@ import Dashboard      from './pages/Dashboard/Dashboard';
 import PolicyPage     from './pages/Policy/PolicyPage';
 import ClaimsPage     from './pages/Claims/ClaimsPage';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+import ChatbotWidget from './components/common/ChatbotWidget';
 
 // Redirect to dashboard if already logged in
 const PublicRoute = ({ children }) => {
@@ -30,14 +31,17 @@ export default function App() {
     <AuthProvider>
       <LanguageProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/"          element={<PublicRoute><Onboarding /></PublicRoute>} />
-            <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/policy"    element={<PrivateRoute><PolicyPage /></PrivateRoute>} />
-            <Route path="/claims"    element={<PrivateRoute><ClaimsPage /></PrivateRoute>} />
-            <Route path="/admin"     element={<AdminDashboard />} />
-            <Route path="*"          element={<Navigate to="/" replace />} />
-          </Routes>
+          <>
+            <Routes>
+              <Route path="/"          element={<PublicRoute><Onboarding /></PublicRoute>} />
+              <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+              <Route path="/policy"    element={<PrivateRoute><PolicyPage /></PrivateRoute>} />
+              <Route path="/claims"    element={<PrivateRoute><ClaimsPage /></PrivateRoute>} />
+              <Route path="/admin"     element={<AdminDashboard />} />
+              <Route path="*"          element={<Navigate to="/" replace />} />
+            </Routes>
+            <ChatbotWidget />
+          </>
         </BrowserRouter>
       </LanguageProvider>
     </AuthProvider>

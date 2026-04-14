@@ -38,5 +38,6 @@ export const getTriggerStatus  = ()       => API.get('/triggers/status');
 export const simulateTrigger   = (type, level) => API.post('/triggers/simulate', { triggerType: type, level });
 export const checkRain         = ()       => API.get('/triggers/check/rain');
 export const checkAQI          = ()       => API.get('/triggers/check/aqi');
+export const sendChatMessage   = (message, history = []) => API.post('/chat', { message, history });
 
 export default API;
