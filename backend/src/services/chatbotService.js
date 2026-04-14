@@ -215,7 +215,7 @@ function topicalAnswer(question) {
       answer: [
         'KAVACH claims are designed to be automated. When a disruption like heavy rain, floods, AQI spikes, curfews, or platform outages is detected, the system first confirms the event from multiple sources, then checks whether the worker could actually work during that time.',
         'After that, the Digital Income Twin estimates what the worker would normally have earned in that window, fraud checks run in the background, and the payout is calculated from the verified income loss rather than a flat amount.',
-        'In the README examples, approved payouts are sent quickly to the worker through UPI after validation.',
+        'Approved payouts are sent quickly to the worker through UPI after validation.',
       ].join('\n\n'),
       grounded: true,
       sources: ['Workflow Overview', 'Scenario A: Heavy Rain Disruption', 'Scenario B: Platform Outage'],
@@ -227,7 +227,7 @@ function topicalAnswer(question) {
     return {
       answer: [
         'KAVACH is a weekly income-protection policy for gig delivery workers. It is meant to cover verified income loss caused by external disruptions such as extreme rain, floods, AQI spikes, curfews, and even platform outages.',
-        'The README describes three coverage tiers: Basic at 50%, Standard at 70%, and Premium at 85% of predicted income loss.',
+        'There are three coverage tiers: Basic at 50%, Standard at 70%, and Premium at 85% of predicted income loss.',
         'It does not cover things like health insurance, life insurance, accidents, or vehicle repair. The product is focused specifically on lost delivery income during verified disruption windows.',
       ].join('\n\n'),
       grounded: true,
@@ -240,7 +240,7 @@ function topicalAnswer(question) {
     return {
       answer: [
         'KAVACH uses a weekly premium model, not a monthly or annual one.',
-        'According to the README, the premium is based on a base rate from the worker\'s verified weekly income, then adjusted by zone risk, seasonal risk, claims-free discount, and any surge risk loading for the coming week.',
+        'The premium is based on a base rate from the worker\'s verified weekly income, then adjusted by zone risk, seasonal risk, claims-free discount, and any surge risk loading for the coming week.',
         'So the premium changes with the worker\'s city, zone, risk profile, season, and recent claims history.',
       ].join('\n\n'),
       grounded: true,
@@ -253,7 +253,7 @@ function topicalAnswer(question) {
     return {
       answer: [
         'KAVACH watches for trigger events such as heavy rainfall, flash floods, AQI spikes, curfews, and platform outages.',
-        'The README explains that these triggers are validated through multiple external sources before a payout flow starts, so the system is not relying on just one signal.',
+        'These triggers are validated through multiple external sources before a payout flow starts, so the system is not relying on just one signal.',
         'That validation layer is important because KAVACH aims to pay only for real, confirmed disruptions.',
       ].join('\n\n'),
       grounded: true,
@@ -265,7 +265,7 @@ function topicalAnswer(question) {
   if (/(register|onboard|signup|sign up|kyc|how.*work)/i.test(normalized)) {
     return {
       answer: [
-        'The onboarding flow in the README starts with registration and KYC, then risk profiling, weekly policy activation, live disruption monitoring, automated claim processing, and finally payout.',
+        'The onboarding flow starts with registration and KYC, then risk profiling, weekly policy activation, live disruption monitoring, automated claim processing, and finally payout.',
         'The user links their phone number, identity details, platform information, work zone, and income data so KAVACH can price the policy and estimate disruption-related income loss.',
       ].join('\n\n'),
       grounded: true,
@@ -280,7 +280,7 @@ function topicalAnswer(question) {
 function fallbackAnswer(question, sections) {
   if (isGreeting(question)) {
     return {
-      answer: 'Hi, I am the KAVACH help assistant. I can explain claims, policies, premiums, payouts, onboarding, and how the platform works.',
+      answer: 'Hi! I am Rakshak, your KAVACH assistant. I can help with claims, policies, premiums, payouts, onboarding, and how the platform works.',
       grounded: false,
       sources: [],
       suggestions: DEFAULT_SUGGESTIONS,
@@ -289,7 +289,7 @@ function fallbackAnswer(question, sections) {
 
   if (!sections.length) {
     return {
-      answer: 'I could not find a precise answer in the KAVACH knowledge file, but KAVACH is designed to protect gig delivery workers against disruptions like rain, floods, AQI spikes, curfews, and platform outages. Ask me about claims, payouts, premiums, or coverage and I will help.',
+      answer: 'I may not have the exact detail for that yet, but KAVACH is designed to protect gig delivery workers against disruptions like rain, floods, AQI spikes, curfews, and platform outages. Ask me about claims, payouts, premiums, coverage, or onboarding and I will help.',
       grounded: false,
       sources: [],
       suggestions: DEFAULT_SUGGESTIONS,
@@ -315,10 +315,6 @@ function fallbackAnswer(question, sections) {
     };
   }
 
-  const intro = sections[0].heading
-    ? `Based on the KAVACH README section "${sections[0].heading}",`
-    : 'Based on the KAVACH README,';
-
   const snippets = sections
     .map((section) => {
       const firstParagraph = section.content
@@ -332,7 +328,7 @@ function fallbackAnswer(question, sections) {
     .join('\n');
 
   return {
-    answer: `${intro}\n${snippets}\n\nIf you want, I can also explain this in simpler terms or focus only on claims, policy, payouts, or premiums.`,
+    answer: `${snippets}\n\nIf you want, I can also explain this in simpler terms or focus only on claims, policy, payouts, or premiums.`,
     grounded: true,
     sources: sections.map((section) => section.heading),
     suggestions: DEFAULT_SUGGESTIONS,
@@ -353,10 +349,11 @@ async function generateWithLlm({ question, history, sections }) {
     {
       role: 'system',
       content: [
-        'You are the KAVACH website help assistant.',
+        'You are the KAVACH website help assistant. Your name is Rakshak.',
         'Answer in a crisp, friendly, support style.',
         'For KAVACH product questions, prioritize the provided README context.',
-        'If the answer is not fully in the context, say what is supported by the context first, then make a careful best-effort inference without inventing backend behavior.',
+        'Do not mention README, context files, internal documents, or sources unless the user explicitly asks where the answer came from.',
+        'If the answer is not fully in the context, make a careful best-effort inference without inventing backend behavior.',
         'Keep answers concise and practical.',
       ].join(' '),
     },

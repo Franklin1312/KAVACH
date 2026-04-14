@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { sendChatMessage } from '../../services/api';
 
 const STARTER_SUGGESTIONS = [
@@ -10,18 +11,18 @@ const STARTER_SUGGESTIONS = [
 const INITIAL_MESSAGE = {
   id: 'welcome',
   role: 'assistant',
-  content: 'Need help with KAVACH? Ask me about claims, policies, payouts, premiums, or how the platform works.',
-  grounded: false,
-  sources: [],
+  content: 'Hi! I am Rakshak, your KAVACH assistant. Ask me about claims, policies, payouts, premiums, or how the platform works.',
   suggestions: STARTER_SUGGESTIONS,
 };
 
 export default function ChatbotWidget() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [loading, setLoading] = useState(false);
   const viewportRef = useRef(null);
+  const showLandingTeaser = !isOpen && location.pathname === '/';
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -58,8 +59,6 @@ export default function ChatbotWidget() {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
           content: data.answer,
-          grounded: Boolean(data.grounded),
-          sources: Array.isArray(data.sources) ? data.sources : [],
           suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
         },
       ]);
@@ -70,8 +69,6 @@ export default function ChatbotWidget() {
           id: `assistant-error-${Date.now()}`,
           role: 'assistant',
           content: 'I ran into a small issue reaching support right now. Please try again in a moment.',
-          grounded: false,
-          sources: [],
           suggestions: STARTER_SUGGESTIONS,
         },
       ]);
@@ -86,7 +83,7 @@ export default function ChatbotWidget() {
         <div className="chatbot-panel">
           <div className="chatbot-header">
             <div>
-              <div className="chatbot-title">KAVACH Help</div>
+              <div className="chatbot-title">Rakshak</div>
               <div className="chatbot-subtitle">Claims, policy, payouts, platform help</div>
             </div>
             <button className="chatbot-close" onClick={() => setIsOpen(false)} aria-label="Close help chat">
@@ -99,12 +96,6 @@ export default function ChatbotWidget() {
               <div key={message.id} className={`chatbot-message chatbot-message-${message.role}`}>
                 <div className="chatbot-bubble">
                   <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
-                  {message.role === 'assistant' && (message.grounded || message.sources?.length > 0) && (
-                    <div className="chatbot-meta">
-                      {message.grounded ? 'Grounded in README' : 'General guidance'}
-                      {message.sources?.length > 0 ? ` • ${message.sources.slice(0, 2).join(' • ')}` : ''}
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
@@ -150,7 +141,16 @@ export default function ChatbotWidget() {
         </div>
       )}
 
-      <button className="chatbot-fab" onClick={() => setIsOpen((current) => !current)} aria-label="Open KAVACH help chat">
+      {showLandingTeaser && (
+        <button className="chatbot-teaser" onClick={() => setIsOpen(true)} aria-label="Open Rakshak assistant">
+          <div className="chatbot-teaser-card">Hi! I am Rakshak. Your KAVACH Assistant</div>
+          <div className="chatbot-teaser-avatar">
+            <img src="/delivery-hero.png" alt="Rakshak assistant" />
+          </div>
+        </button>
+      )}
+
+      <button className="chatbot-fab" onClick={() => setIsOpen((current) => !current)} aria-label="Open Rakshak assistant">
         <span className="chatbot-fab-badge">Help</span>
         <span className="chatbot-fab-icon">?</span>
       </button>
