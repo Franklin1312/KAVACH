@@ -150,10 +150,12 @@ export default function ChatbotWidget() {
         </button>
       )}
 
-      <button className="chatbot-fab" onClick={() => setIsOpen((current) => !current)} aria-label="Open Rakshak assistant">
-        <span className="chatbot-fab-badge">Help</span>
-        <span className="chatbot-fab-icon">?</span>
-      </button>
+      {!showLandingTeaser && (
+        <button className="chatbot-fab" onClick={() => setIsOpen((current) => !current)} aria-label="Open Rakshak assistant">
+          <span className="chatbot-fab-badge">Help</span>
+          <span className="chatbot-fab-icon">?</span>
+        </button>
+      )}
     </div>
   );
 }

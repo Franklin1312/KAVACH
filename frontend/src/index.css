@@ -377,16 +377,16 @@ button {
 }
 
 .chatbot-teaser-card {
-  width: min(320px, calc(100vw - 88px));
-  min-height: 92px;
-  margin-right: 38px;
+  width: min(288px, calc(100vw - 100px));
+  min-height: 84px;
+  margin-right: 34px;
   border-radius: 18px;
-  padding: 20px 78px 20px 18px;
+  padding: 16px 70px 16px 16px;
   background: rgba(255, 255, 255, 0.96);
   color: #2c313b;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
-  line-height: 1.45;
+  line-height: 1.4;
   text-align: left;
   box-shadow: 0 14px 40px rgba(5, 19, 38, 0.18);
 }
@@ -394,10 +394,10 @@ button {
 .chatbot-teaser-avatar {
   position: absolute;
   right: 0;
-  width: 84px;
-  height: 84px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
-  padding: 6px;
+  padding: 5px;
   background: linear-gradient(135deg, #67c63c, #a2df48);
   box-shadow: 0 12px 26px rgba(26, 58, 23, 0.22);
 }
@@ -572,16 +572,16 @@ button {
   }
 
   .chatbot-teaser-card {
-    width: min(260px, calc(100vw - 60px));
-    min-height: 84px;
-    margin-right: 30px;
-    padding: 16px 68px 16px 14px;
-    font-size: 14px;
+    width: min(236px, calc(100vw - 68px));
+    min-height: 74px;
+    margin-right: 26px;
+    padding: 14px 60px 14px 12px;
+    font-size: 13px;
   }
 
   .chatbot-teaser-avatar {
-    width: 70px;
-    height: 70px;
+    width: 62px;
+    height: 62px;
   }
 
   .chatbot-panel {
