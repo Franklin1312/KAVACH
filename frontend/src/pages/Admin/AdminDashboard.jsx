@@ -39,6 +39,7 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState({});
   const [sustainability, setSustainability] = useState(null);
   const [sustainLoading, setSustainLoading] = useState(false);
+  const [expandedCities, setExpandedCities] = useState({});
 
   const token = localStorage.getItem('kavach_admin_token');
   const headers = { Authorization: `Bearer ${token}` };
@@ -247,6 +248,10 @@ export default function AdminDashboard() {
           }, {});
           const cities = Object.keys(grouped).sort();
 
+          const toggleCity = (city) => {
+            setExpandedCities((prev) => ({ ...prev, [city]: !prev[city] }));
+          };
+
           return (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -254,30 +259,48 @@ export default function AdminDashboard() {
                   <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'Outfit, sans-serif' }}>Registered Workers</div>
                   <div style={{ color: '#9CA3AF', fontSize: 13, marginTop: 2 }}>{workers.length} workers across {cities.length} cities</div>
                 </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => { const all = {}; cities.forEach((c) => all[c] = true); setExpandedCities(all); }} style={{ background: '#EBF0FA', color: '#0B3D91', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Expand All</button>
+                  <button onClick={() => setExpandedCities({})} style={{ background: '#F5F7FA', color: '#5A6478', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Collapse All</button>
+                </div>
               </div>
 
-              {cities.map((city) => (
-                <div key={city} className="card" style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
-                  {/* City Header */}
-                  <div style={{ background: 'linear-gradient(135deg, #0B3D91 0%, #1A5BC4 100%)', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', textTransform: 'capitalize', fontFamily: 'Outfit, sans-serif' }}>{city}</div>
-                    <span style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: 20, fontSize: 11, fontWeight: 700, padding: '2px 10px' }}>
-                      {grouped[city].length} worker{grouped[city].length !== 1 ? 's' : ''}
-                    </span>
+              {cities.map((city) => {
+                const isExpanded = expandedCities[city];
+                return (
+                <div key={city} className="card" style={{ marginBottom: 12, padding: 0, overflow: 'hidden' }}>
+                  {/* City Header — clickable to toggle */}
+                  <div
+                    onClick={() => toggleCity(city)}
+                    style={{ background: 'linear-gradient(135deg, #0B3D91 0%, #1A5BC4 100%)', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', textTransform: 'capitalize', fontFamily: 'Outfit, sans-serif' }}>{city}</div>
+                      <span style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: 20, fontSize: 11, fontWeight: 700, padding: '2px 10px' }}>
+                        {grouped[city].length} worker{grouped[city].length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <span style={{ color: '#fff', fontSize: 18, fontWeight: 300, transition: 'transform 0.2s', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
                   </div>
 
-                  {/* Workers Table */}
+                  {/* Workers Table — collapsible */}
+                  {isExpanded && (
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                       <thead>
                         <tr style={{ color: '#9CA3AF', textAlign: 'left', background: '#F9FAFB' }}>
-                          {['Name', 'Phone', 'Zone', 'Platform', 'Weekly Income', 'Zone Risk', 'Claims-Free', 'Joined'].map((h) => (
+                          {['Name', 'Phone', 'Zone', 'Platform', 'Weekly Income', 'Zone Risk', 'Engagement', 'DPDP', 'Joined'].map((h) => (
                             <th key={h} style={{ padding: '8px 16px', borderBottom: '1px solid #E5E7EB', fontWeight: 600, fontSize: 11 }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {grouped[city].map((worker) => (
+                        {grouped[city].map((worker) => {
+                          const days = worker.platformActiveDays || 0;
+                          const threshold = (worker.platforms?.length || 1) > 1 ? 120 : 90;
+                          const qualified = worker.engagementQualified || days >= threshold;
+                          const hasConsent = worker.dpdpConsent?.gps && worker.dpdpConsent?.bank && worker.dpdpConsent?.platform;
+                          return (
                           <tr key={worker._id} style={{ borderBottom: '1px solid #F0F0F0' }}>
                             <td style={{ padding: '11px 16px', fontWeight: 600 }}>{worker.name}</td>
                             <td style={{ padding: '11px 16px', color: '#5A6478' }}>{worker.phone}</td>
@@ -287,15 +310,27 @@ export default function AdminDashboard() {
                             <td style={{ padding: '11px 16px', fontWeight: 700, color: worker.zoneRiskFactor >= 1.3 ? '#E53935' : worker.zoneRiskFactor <= 0.85 ? '#00A86B' : '#F5A623' }}>
                               {worker.zoneRiskFactor}x
                             </td>
-                            <td style={{ padding: '11px 16px', color: '#5A6478' }}>{worker.claimsFreeWeeks}w</td>
+                            <td style={{ padding: '11px 16px' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: qualified ? '#E5F7EF' : '#FFF3E0', color: qualified ? '#007A4D' : '#E65100' }}>
+                                {qualified ? '✓' : '⚠'} {days}d/{threshold}d
+                              </span>
+                            </td>
+                            <td style={{ padding: '11px 16px' }}>
+                              <span style={{ display: 'inline-block', width: 20, height: 20, borderRadius: '50%', background: hasConsent ? '#E5F7EF' : '#FDEAEA', color: hasConsent ? '#007A4D' : '#E53935', textAlign: 'center', lineHeight: '20px', fontSize: 12, fontWeight: 700 }}>
+                                {hasConsent ? '✓' : '✗'}
+                              </span>
+                            </td>
                             <td style={{ padding: '11px 16px', color: '#9CA3AF' }}>{new Date(worker.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           );
         })()}
@@ -358,8 +393,8 @@ export default function AdminDashboard() {
                 return [
                   { label: '4-Week P2P Ratio', value: `${p2pPct}%`, color: p2pColor, sub: p2p > 0.85 ? 'CRITICAL' : p2p > 0.70 ? 'ELEVATED' : 'HEALTHY' },
                   { label: 'Net Margin (Current)', value: `${RUPEE}${(bep.net || 0).toLocaleString('en-IN')}`, color: (bep.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: `${bep.portfolioSize || 0} workers` },
-                  { label: 'Projected at 1K Workers', value: `${RUPEE}${(sustainability?.breakEvenProjections?.at1000?.net || 0).toLocaleString('en-IN')}`, color: (sustainability?.breakEvenProjections?.at1000?.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: 'Net margin' },
                   { label: 'Projected at 5K Workers', value: `${RUPEE}${(sustainability?.breakEvenProjections?.at5000?.net || 0).toLocaleString('en-IN')}`, color: (sustainability?.breakEvenProjections?.at5000?.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: 'Net margin' },
+                  { label: 'Projected at 10K Workers', value: `${RUPEE}${(sustainability?.breakEvenProjections?.at10000?.net || 0).toLocaleString('en-IN')}`, color: (sustainability?.breakEvenProjections?.at10000?.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: 'Net margin' },
                 ].map((item) => (
                   <div key={item.label} style={{ background: '#fff', borderRadius: 16, padding: 20, textAlign: 'center', border: `2px solid ${item.color}15`, boxShadow: `0 4px 16px ${item.color}10` }}>
                     <div style={{ fontSize: 12, color: '#5A6478', marginBottom: 4 }}>{item.label}</div>
@@ -428,9 +463,9 @@ export default function AdminDashboard() {
                   <BarChart
                     data={[
                       { name: `Current (${sustainability.breakEvenProjections.current.portfolioSize})`, ...sustainability.breakEvenProjections.current },
-                      { name: '500 Workers', ...sustainability.breakEvenProjections.at500 },
-                      { name: '1,000 Workers', ...sustainability.breakEvenProjections.at1000 },
+                      { name: '2,000 Workers', ...sustainability.breakEvenProjections.at2000 },
                       { name: '5,000 Workers', ...sustainability.breakEvenProjections.at5000 },
+                      { name: '10,000 Workers', ...sustainability.breakEvenProjections.at10000 },
                     ]}
                     margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
                   >
@@ -447,9 +482,9 @@ export default function AdminDashboard() {
                     <Bar dataKey="net" radius={[4, 4, 0, 0]} name="Net Margin">
                       {[
                         sustainability.breakEvenProjections.current,
-                        sustainability.breakEvenProjections.at500,
-                        sustainability.breakEvenProjections.at1000,
+                        sustainability.breakEvenProjections.at2000,
                         sustainability.breakEvenProjections.at5000,
+                        sustainability.breakEvenProjections.at10000,
                       ].map((entry, idx) => (
                         <Cell key={idx} fill={entry.net >= 0 ? '#00A86B' : '#E53935'} />
                       ))}

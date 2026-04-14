@@ -145,15 +145,14 @@ export default function ChatbotWidget() {
         <button className="chatbot-teaser" onClick={() => setIsOpen(true)} aria-label="Open Rakshak assistant">
           <div className="chatbot-teaser-card">Hi! I am Rakshak. Your KAVACH Assistant</div>
           <div className="chatbot-teaser-avatar">
-            <img src="/delivery-hero.png" alt="Rakshak assistant" />
+            <img src="/chatbot.jpeg" alt="Rakshak assistant" />
           </div>
         </button>
       )}
 
       {!showLandingTeaser && (
-        <button className="chatbot-fab" onClick={() => setIsOpen((current) => !current)} aria-label="Open Rakshak assistant">
-          <span className="chatbot-fab-badge">Help</span>
-          <span className="chatbot-fab-icon">?</span>
+        <button className="chatbot-fab" onClick={() => setIsOpen((current) => !current)} aria-label="Open Rakshak assistant" style={{ padding: 0, overflow: 'hidden', border: '3px solid #fff', boxShadow: '0 4px 20px rgba(11,61,145,0.35)' }}>
+          <img src="/chatbot.jpeg" alt="Rakshak" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
         </button>
       )}
     </div>

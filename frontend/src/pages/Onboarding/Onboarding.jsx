@@ -100,6 +100,7 @@ export default function Onboarding() {
     usualShiftEnd: '20:00',
     workingDays: [1, 2, 3, 4, 5, 6],
   });
+  const [consent, setConsent] = useState({ gps: false, bank: false, platform: false });
 
   const stepBars = useMemo(() => [0, 1, 2, 3], []);
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
@@ -374,7 +375,28 @@ export default function Onboarding() {
           </div>
         </div>
         {error && <div className="error-msg" style={{ marginBottom: 16 }}>{error}</div>}
-        <button className="btn-primary" onClick={handleRegister} disabled={loading}>{loading ? t('onboard.creatingAccount', 'Creating account...') : t('onboard.activateKavach', 'Activate KAVACH →')}</button>
+
+        {/* DPDP Act 2023 — Consent Checkboxes */}
+        <div style={{ background: '#F0F4FF', border: '1px solid #C7D2FE', borderRadius: 12, padding: '16px 18px', marginBottom: 18 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#0B3D91', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>Data Consent (DPDP Act, 2023)</div>
+          {[
+            { key: 'gps', label: 'I consent to GPS location tracking for zone verification and trigger validation' },
+            { key: 'bank', label: 'I consent to sharing my UPI/bank details for claim payouts (KYC verified)' },
+            { key: 'platform', label: 'I acknowledge the data sharing agreement with my delivery platform' },
+          ].map((item) => (
+            <label key={item.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, cursor: 'pointer', fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+              <input
+                type="checkbox"
+                checked={consent[item.key]}
+                onChange={() => setConsent((prev) => ({ ...prev, [item.key]: !prev[item.key] }))}
+                style={{ marginTop: 3, accentColor: '#0B3D91', width: 16, height: 16, flexShrink: 0 }}
+              />
+              {item.label}
+            </label>
+          ))}
+        </div>
+
+        <button className="btn-primary" onClick={handleRegister} disabled={loading || !consent.gps || !consent.bank || !consent.platform}>{loading ? t('onboard.creatingAccount', 'Creating account...') : t('onboard.activateKavach', 'Activate KAVACH →')}</button>
         <button className="btn-secondary" style={{ width: '100%', marginTop: 10 }} onClick={() => { setStep(2); setError(''); }}>{t('onboard.back', 'Back')}</button>
       </>
     );

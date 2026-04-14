@@ -62,6 +62,18 @@ const WorkerSchema = new mongoose.Schema(
     otpExpiry: { type: Date },
     isVerified: { type: Boolean, default: false },
     isActive:   { type: Boolean, default: true },
+
+    // SS Code 2020 — 90/120-day engagement tracking
+    platformActiveDays: { type: Number, default: 0 },
+    engagementQualified: { type: Boolean, default: false }, // true if >= 90 days (single) or 120 days (multi)
+
+    // DPDP Act 2023 — consent audit trail
+    dpdpConsent: {
+      gps:       { type: Boolean, default: false },
+      bank:      { type: Boolean, default: false },
+      platform:  { type: Boolean, default: false },
+      consentedAt: { type: Date },
+    },
   },
   { timestamps: true }
 );

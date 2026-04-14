@@ -153,6 +153,12 @@ router.post('/register', async (req, res) => {
     const activeDaysMock   = 14; // mock active days — real value from Zomato/Swiggy API
     const meetsActivityReq = activeDaysMock >= 7;
 
+    // SS Code 2020 — 90/120-day engagement rule
+    // Single-platform: 90 days required; Multi-platform (multi-apping): 120 days
+    const engagementThreshold = platforms.length > 1 ? 120 : 90;
+    const platformActiveDays  = activeDaysMock; // In production: verified via platform API
+    const engagementQualified = platformActiveDays >= engagementThreshold;
+
     const worker = await Worker.findOneAndUpdate(
       { phone },
       {
@@ -167,6 +173,14 @@ router.post('/register', async (req, res) => {
         // Activity tier — workers with <7 active days get lower tier
         activityTier: meetsActivityReq ? 'standard' : 'lower',
         claimsFreeWeeks: 0,
+        // SS Code 2020 engagement
+        platformActiveDays,
+        engagementQualified,
+        // DPDP Act 2023 consent
+        dpdpConsent: {
+          gps: true, bank: true, platform: true,
+          consentedAt: new Date(),
+        },
       },
       { new: true }
     );

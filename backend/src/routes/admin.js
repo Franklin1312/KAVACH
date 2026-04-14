@@ -96,7 +96,7 @@ router.get('/claims', async (req, res) => {
 router.get('/workers', async (req, res) => {
   try {
     const workers = await Worker.find({ isVerified: true })
-      .select('name phone city zone platforms declaredWeeklyIncome zoneRiskFactor fraudScore claimsFreeWeeks createdAt')
+      .select('name phone city zone platforms declaredWeeklyIncome zoneRiskFactor fraudScore claimsFreeWeeks platformActiveDays engagementQualified dpdpConsent createdAt')
       .sort({ city: 1, createdAt: -1 })
       .limit(500);
     res.json({ success: true, workers });
@@ -398,17 +398,11 @@ router.get('/sustainability', async (req, res) => {
         payouts: Math.round(totalPay),
         net: Math.round(totalPrem - totalPay),
       },
-      at500: {
-        portfolioSize: 500,
-        premiums: Math.round(avgPremiumPerWorker * 500),
-        payouts: Math.round(avgPayoutPerWorker * 500),
-        net: Math.round(netPerWorker * 500),
-      },
-      at1000: {
-        portfolioSize: 1000,
-        premiums: Math.round(avgPremiumPerWorker * 1000),
-        payouts: Math.round(avgPayoutPerWorker * 1000),
-        net: Math.round(netPerWorker * 1000),
+      at2000: {
+        portfolioSize: 2000,
+        premiums: Math.round(avgPremiumPerWorker * 2000),
+        payouts: Math.round(avgPayoutPerWorker * 2000),
+        net: Math.round(netPerWorker * 2000),
       },
       at5000: {
         portfolioSize: 5000,
@@ -416,7 +410,45 @@ router.get('/sustainability', async (req, res) => {
         payouts: Math.round(avgPayoutPerWorker * 5000),
         net: Math.round(netPerWorker * 5000),
       },
+      at10000: {
+        portfolioSize: 10000,
+        premiums: Math.round(avgPremiumPerWorker * 10000),
+        payouts: Math.round(avgPayoutPerWorker * 10000),
+        net: Math.round(netPerWorker * 10000),
+      },
     };
+
+    // ─── Minimum workers to pass a 14-day monsoon stress test ─────────────
+    // Stress formula: netBCR = (existingPayouts + projectedPayout) / (premiumPool + projectedPremiums) <= 0.85
+    // With reinsurance absorbing 60% of excess above 50% retention
+    const avgWeeklyIncome = currentWorkerCount > 0
+      ? (await Worker.aggregate([{ $match: { isVerified: true } }, { $group: { _id: null, avg: { $avg: { $ifNull: ['$verifiedWeeklyIncome', '$declaredWeeklyIncome'] } } } }]))[0]?.avg || 5000
+      : 5000;
+    const dailyIncome = avgWeeklyIncome / 6;
+    const stressDays = 14;
+    const affectedPct = 0.70;
+    const coveragePct = 0.70;
+    const levelMult = 0.85;
+    const payoutPerWorkerPerDay = dailyIncome * coveragePct * levelMult;
+
+    // Find N where netBCR(N) <= 0.85
+    // At scale, more workers = more premiums collected = lower BCR
+    let minimumForStressPass = 0;
+    for (let n = 100; n <= 50000; n += 50) {
+      const premPool = avgPremiumPerWorker * n;
+      const affected = Math.round(n * affectedPct);
+      const grossPayout = affected * payoutPerWorkerPerDay * stressDays;
+      const retention = premPool * 0.50;
+      const excess = Math.max(0, grossPayout - retention);
+      const reinAbsorb = excess * 0.60;
+      const netPayout = grossPayout - reinAbsorb;
+      const bcr = premPool > 0 ? netPayout / premPool : 999;
+      if (bcr <= 0.85) {
+        minimumForStressPass = n;
+        break;
+      }
+    }
+
 
     // Reinsurer trigger thresholds
     const currentBCR = totalPrem > 0 ? totalPay / totalPrem : 0;
@@ -447,6 +479,8 @@ router.get('/sustainability', async (req, res) => {
       payoutToPremiumRatio4w: parseFloat(payoutToPremiumRatio4w.toFixed(4)),
       breakEvenProjections,
       reinsurerTriggers,
+      minimumForStressPass,
+      avgWeeklyIncomePerWorker: Math.round(avgWeeklyIncome),
       premiumPerWorkerPerWeek: weeklyTrend.map(w => ({
         week: w.week,
         premiumPerWorker: w.premiumPerWorker,

@@ -8,6 +8,7 @@ const { calculatePremium }            = require('../services/premiumService');
 const { notifyPolicyActivated }       = require('../services/notificationService');
 const { createPremiumSubscription }   = require('../services/paymentService');
 const { findActivePolicyForWorker }   = require('../services/policyAccessService');
+const { runAllTriggers }              = require('../services/triggerService');
 
 function getCurrentWeekWindow() {
   const now  = new Date();
@@ -82,6 +83,26 @@ router.post('/', protect, async (req, res) => {
 
     const existing = await findActivePolicyForWorker(worker._id, new Date());
     if (existing) return res.status(400).json({ error: 'You already have an active policy this week', policy: existing });
+
+    // ─── Adverse Selection Lockout ──────────────────────────────────────────
+    // Block enrollment if there's an active severe trigger in the worker's city
+    // (prevents buying insurance 48 hours before a known red alert)
+    try {
+      const triggerStatus = await runAllTriggers(worker, worker.platforms || []);
+      const activeSevere = (triggerStatus.triggers || []).find(
+        (t) => t.active && t.level >= 3
+      );
+      if (activeSevere) {
+        return res.status(403).json({
+          error: `Enrollment locked: ${activeSevere.type.toUpperCase()} Level ${activeSevere.level} alert is active in ${worker.city}. Try again after the disruption ends.`,
+          lockoutReason: 'adverse_selection',
+          trigger: activeSevere,
+        });
+      }
+    } catch (triggerErr) {
+      // Non-fatal: if trigger check fails, allow enrollment anyway
+      console.error('[LOCKOUT] Trigger check failed (non-fatal):', triggerErr.message);
+    }
 
     const { breakdown, finalAmount, coveragePct, maxPayout, tier: selectedTier } =
       calculatePremium({
