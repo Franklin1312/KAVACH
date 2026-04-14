@@ -5,12 +5,16 @@ const WA_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 const WA_BASE = `https://graph.facebook.com/v18.0/${WA_PHONE_ID}/messages`;
 
 function shouldUseMockWhatsApp() {
+  // If the user explicitly disabled mock mode and provided keys, prioritize the real API
+  if (process.env.ENABLE_MOCK === 'false' && WA_TOKEN && WA_PHONE_ID) {
+    return false;
+  }
   return (
     process.env.NODE_ENV === 'development'
     || !WA_TOKEN
     || !WA_PHONE_ID
-    || WA_TOKEN === 'your_whatsapp_token'
-    || WA_PHONE_ID === 'your_phone_id'
+    || WA_TOKEN.includes('your_whatsapp_token')
+    || WA_PHONE_ID.includes('your_phone_id')
   );
 }
 
@@ -40,6 +44,7 @@ async function sendMessage(to, message) {
         timeout: 3000,
       }
     );
+    console.log(`[LIVE] WhatsApp sent successfully to ${recipient}`);
     return data;
   } catch (err) {
     console.error('WhatsApp error:', err.response?.data || err.message);

@@ -3,6 +3,7 @@ const router  = express.Router();
 const jwt     = require('jsonwebtoken');
 const Worker  = require('../models/Worker');
 const AuditLog = require('../models/AuditLog');
+const { sendMessage } = require('../services/notificationService');
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
@@ -57,6 +58,10 @@ router.post('/send-otp', async (req, res) => {
     );
 
     console.log(`OTP for ${phone}: ${otp}`);
+    
+    // Dispatch WhatsApp verification code
+    const msg = `KAVACH Secure Login\n\nYour OTP code is: *${otp}*\n\nThis code expires in 10 minutes. Please do not share it with anyone.`;
+    sendMessage(phone, msg).catch(err => console.error('Failed to send OTP via WA:', err.message));
 
     res.json({
       success: true,
