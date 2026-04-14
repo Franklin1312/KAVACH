@@ -28,7 +28,7 @@ const STATUS_COLORS = {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { adminLogout } = useAuth();
+  const { adminLogout, admin } = useAuth();
   const [stats, setStats] = useState(null);
   const [claims, setClaims] = useState([]);
   const [workers, setWorkers] = useState([]);
@@ -110,6 +110,12 @@ export default function AdminDashboard() {
 
   const summary = stats?.stats || {};
   const bcrColor = summary.bcrPct > 85 ? '#E53935' : summary.bcrPct > 70 ? '#F5A623' : '#00A86B';
+  const adminProfile = {
+    username: admin?.username || 'admin',
+    phone: admin?.phone || 'Not available',
+    role: admin?.role || 'admin',
+    accessLevel: 'Full platform administration',
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F7FA' }}>
@@ -145,8 +151,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 4, marginBottom: 28, borderBottom: '2px solid #E5E7EB' }}>
-          {['overview', 'claims', 'workers', 'sustainability', 'stress'].map((name) => (
+        <div style={{ display: 'flex', gap: 4, marginBottom: 28, borderBottom: '2px solid #E5E7EB', flexWrap: 'wrap' }}>
+          {['overview', 'claims', 'workers', 'sustainability', 'stress', 'profile'].map((name) => (
             <button key={name} onClick={() => setTab(name)} style={{ background: 'none', border: 'none', color: tab === name ? '#0B3D91' : '#9CA3AF', fontWeight: tab === name ? 700 : 500, padding: '10px 20px', borderBottom: tab === name ? '3px solid #0B3D91' : '3px solid transparent', borderRadius: 0, fontSize: 14, fontFamily: tab === name ? 'Outfit, sans-serif' : 'inherit' }}>
               {name === 'stress' ? 'Stress Test' : name === 'sustainability' ? 'Sustainability' : name.charAt(0).toUpperCase() + name.slice(1)}
               {name === 'claims' && summary.pendingClaims > 0 && <span style={{ marginLeft: 6, background: '#FF6B35', color: '#fff', borderRadius: 10, fontSize: 10, padding: '2px 7px', fontWeight: 700 }}>{summary.pendingClaims}</span>}
@@ -442,6 +448,72 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ) : <div style={{ color: '#9CA3AF', fontSize: 13 }}>No reinsurer data available</div>}
+            </div>
+          </div>
+        )}
+
+        {tab === 'profile' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 16, alignItems: 'start' }}>
+            <div className="card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+                <div style={{ width: 68, height: 68, borderRadius: 20, background: 'linear-gradient(135deg, #0B3D91, #1A5BC4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 28, fontWeight: 800, fontFamily: 'Outfit, sans-serif', boxShadow: '0 10px 24px rgba(11,61,145,0.22)' }}>
+                  {adminProfile.username.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: '#1A1A2E', fontFamily: 'Outfit, sans-serif' }}>{adminProfile.username}</div>
+                  <div style={{ fontSize: 13, color: '#5A6478' }}>KAVACH platform administrator</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+                {[
+                  { label: 'Role', value: adminProfile.role.toUpperCase() },
+                  { label: 'Admin Phone', value: adminProfile.phone },
+                  { label: 'Access Level', value: adminProfile.accessLevel },
+                  { label: 'Session Mode', value: 'Authenticated admin session' },
+                ].map((item) => (
+                  <div key={item.label} style={{ background: '#F8FAFD', border: '1px solid #E7EDF5', borderRadius: 14, padding: '14px 16px' }}>
+                    <div style={{ fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 5 }}>{item.label}</div>
+                    <div style={{ fontSize: 15, color: '#1A1A2E', fontWeight: 700, lineHeight: 1.4 }}>{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: 16 }}>
+              <div className="card">
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Admin Permissions</div>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {[
+                    'View platform metrics, claims, worker portfolio, and sustainability dashboards',
+                    'Approve or reject claims under manual review',
+                    'Run catastrophe stress testing scenarios',
+                    'Monitor payout-to-premium health and reinsurer trigger thresholds',
+                  ].map((item) => (
+                    <div key={item} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', color: '#334155', fontSize: 14, lineHeight: 1.5 }}>
+                      <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#E5F7EF', color: '#007A4D', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>✓</span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card">
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Platform Snapshot</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {[
+                    { label: 'Active Policies', value: summary.activePolicies ?? '-' },
+                    { label: 'Pending Claims', value: summary.pendingClaims ?? '-' },
+                    { label: 'Burning Cost Ratio', value: `${summary.bcrPct ?? 0}%` },
+                    { label: 'Fraud Rejections', value: summary.rejectedClaims ?? '-' },
+                  ].map((item) => (
+                    <div key={item.label} style={{ borderRadius: 12, background: '#F5F7FA', padding: '12px 14px' }}>
+                      <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>{item.label}</div>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: '#0B3D91', fontFamily: 'Outfit, sans-serif' }}>{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}

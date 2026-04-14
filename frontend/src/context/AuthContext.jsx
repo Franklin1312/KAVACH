@@ -12,7 +12,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (localStorage.getItem('kavach_admin_token')) {
       setIsAdmin(true);
-      setAdmin({ username: localStorage.getItem('kavach_admin_username') || 'admin' });
+      setAdmin({
+        username: localStorage.getItem('kavach_admin_username') || 'admin',
+        phone: localStorage.getItem('kavach_admin_phone') || '',
+        role: 'admin',
+      });
     }
 
     const token = localStorage.getItem('kavach_token');
@@ -32,6 +36,7 @@ export const AuthProvider = ({ children }) => {
   const login = (token, workerData) => {
     localStorage.removeItem('kavach_admin_token');
     localStorage.removeItem('kavach_admin_username');
+    localStorage.removeItem('kavach_admin_phone');
     setIsAdmin(false);
     setAdmin(null);
     localStorage.setItem('kavach_token', token);
@@ -42,6 +47,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('kavach_token');
     localStorage.removeItem('kavach_admin_token');
     localStorage.removeItem('kavach_admin_username');
+    localStorage.removeItem('kavach_admin_phone');
     setWorker(null);
     setIsAdmin(false);
     setAdmin(null);
@@ -51,14 +57,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('kavach_token');
     localStorage.setItem('kavach_admin_token', token);
     localStorage.setItem('kavach_admin_username', adminData?.username || 'admin');
+    localStorage.setItem('kavach_admin_phone', adminData?.phone || '');
     setWorker(null);
     setIsAdmin(true);
-    setAdmin(adminData || { username: 'admin' });
+    setAdmin({ ...(adminData || { username: 'admin' }), role: 'admin' });
   };
 
   const adminLogout = () => {
     localStorage.removeItem('kavach_admin_token');
     localStorage.removeItem('kavach_admin_username');
+    localStorage.removeItem('kavach_admin_phone');
     setIsAdmin(false);
     setAdmin(null);
   };
