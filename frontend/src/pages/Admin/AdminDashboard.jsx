@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { getAdminStats, getAdminClaims, getAdminWorkers, getAdminSustainability } from '../../services/adminApi';
 import axios from 'axios';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Cell, ComposedChart, Legend } from 'recharts';
@@ -27,6 +28,7 @@ const STATUS_COLORS = {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { adminLogout } = useAuth();
   const [stats, setStats] = useState(null);
   const [claims, setClaims] = useState([]);
   const [workers, setWorkers] = useState([]);
@@ -38,8 +40,17 @@ export default function AdminDashboard() {
   const [sustainability, setSustainability] = useState(null);
   const [sustainLoading, setSustainLoading] = useState(false);
 
-  const token = localStorage.getItem('kavach_token');
+  const token = localStorage.getItem('kavach_admin_token');
   const headers = { Authorization: `Bearer ${token}` };
+
+  const handleAdminError = (err, fallbackMessage) => {
+    if ([401, 403].includes(err?.response?.status)) {
+      adminLogout();
+      navigate('/', { replace: true });
+      return;
+    }
+    alert(err.response?.data?.error || fallbackMessage);
+  };
 
   const fetchAll = () => {
     setLoading(true);
@@ -48,7 +59,9 @@ export default function AdminDashboard() {
       getAdminClaims().then(({ data }) => setClaims(data.claims || [])),
       getAdminWorkers().then(({ data }) => setWorkers(data.workers || [])),
       getAdminSustainability().then(({ data }) => setSustainability(data)).catch(() => {}),
-    ]).finally(() => setLoading(false));
+    ])
+      .catch((err) => handleAdminError(err, 'Could not load admin dashboard'))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchAll(); }, []);
@@ -59,7 +72,7 @@ export default function AdminDashboard() {
       await axios.put(`${API}/admin/claims/${claimId}/approve`, { reviewNotes: 'Manually approved by admin' }, { headers });
       fetchAll();
     } catch (err) {
-      alert(err.response?.data?.error || 'Approve failed');
+      handleAdminError(err, 'Approve failed');
     } finally {
       setActionLoading((current) => ({ ...current, [claimId]: null }));
     }
@@ -73,7 +86,7 @@ export default function AdminDashboard() {
       await axios.put(`${API}/admin/claims/${claimId}/reject`, { reason }, { headers });
       fetchAll();
     } catch (err) {
-      alert(err.response?.data?.error || 'Reject failed');
+      handleAdminError(err, 'Reject failed');
     } finally {
       setActionLoading((current) => ({ ...current, [claimId]: null }));
     }
@@ -85,7 +98,7 @@ export default function AdminDashboard() {
       const { data } = await axios.post(`${API}/admin/stress-test`, { days: 14, triggerType: 'rain', affectedPct: 0.7 }, { headers });
       setStress(data.scenario);
     } catch (err) {
-      alert(err.response?.data?.error || 'Stress test failed');
+      handleAdminError(err, 'Stress test failed');
     } finally {
       setStressLoading(false);
     }
@@ -108,7 +121,13 @@ export default function AdminDashboard() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-secondary" onClick={fetchAll} style={{ padding: '8px 16px' }}>Refresh</button>
-          <button className="btn-secondary" onClick={() => navigate('/dashboard')} style={{ padding: '8px 16px' }}>Worker View</button>
+          <button
+            id="admin-logout-btn"
+            onClick={() => { adminLogout(); navigate('/', { replace: true }); }}
+            style={{ padding: '8px 18px', background: 'linear-gradient(135deg, #E53935, #C62828)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          >
+            Logout
+          </button>
         </div>
       </nav>
 

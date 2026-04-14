@@ -15,6 +15,7 @@ API.interceptors.request.use((config) => {
 export const sendOTP      = (phone)       => API.post('/auth/send-otp',    { phone });
 export const verifyOTP    = (phone, otp)  => API.post('/auth/verify-otp',  { phone, otp });
 export const registerWorker = (data)      => API.post('/auth/register',    data);
+export const loginAdmin   = (phone, password) => API.post('/auth/admin/login', { phone, password });
 
 // ─── Worker ───────────────────────────────────────────────────────────────────
 export const getMe        = ()            => API.get('/workers/me');

@@ -12,9 +12,10 @@ import ChatbotWidget from './components/common/ChatbotWidget';
 
 // Redirect to dashboard if already logged in
 const PublicRoute = ({ children }) => {
-  const { worker, loading } = useAuth();
+  const { worker, isAdmin, loading } = useAuth();
   const { t } = useLanguage();
   if (loading) return <div style={{ padding: 40, color: '#8b949e' }}>{t('common.loading', 'Loading...')}</div>;
+  if (isAdmin) return <Navigate to="/admin" replace />;
   return worker ? <Navigate to="/dashboard" replace /> : children;
 };
 
@@ -24,6 +25,14 @@ const PrivateRoute = ({ children }) => {
   const { t } = useLanguage();
   if (loading) return <div style={{ padding: 40, color: '#8b949e' }}>{t('common.loading', 'Loading...')}</div>;
   return worker ? children : <Navigate to="/" replace />;
+};
+
+// Admin-only route — redirects to home if not authenticated as admin
+const AdminRoute = ({ children }) => {
+  const { isAdmin, loading } = useAuth();
+  const { t } = useLanguage();
+  if (loading) return <div style={{ padding: 40, color: '#8b949e' }}>{t('common.loading', 'Loading...')}</div>;
+  return isAdmin ? children : <Navigate to="/" replace />;
 };
 
 export default function App() {
@@ -37,7 +46,7 @@ export default function App() {
               <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
               <Route path="/policy"    element={<PrivateRoute><PolicyPage /></PrivateRoute>} />
               <Route path="/claims"    element={<PrivateRoute><ClaimsPage /></PrivateRoute>} />
-              <Route path="/admin"     element={<AdminDashboard />} />
+              <Route path="/admin"     element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="*"          element={<Navigate to="/" replace />} />
             </Routes>
             <ChatbotWidget />

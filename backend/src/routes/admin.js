@@ -7,6 +7,9 @@ const AuditLog = require('../models/AuditLog');
 const { processPayout }          = require('../services/paymentService');
 const { notifyClaimAutoApproved, notifyClaimManualReview } = require('../services/notificationService');
 const { getCityDisruptionProfile, getHistoricalRisk } = require('../services/historicalDisruption');
+const { protectAdmin } = require('../middleware/auth');
+
+router.use(protectAdmin);
 
 // ─── GET /api/admin/stats ─────────────────────────────────────────────────────
 router.get('/stats', async (req, res) => {

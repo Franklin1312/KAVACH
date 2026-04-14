@@ -5,7 +5,7 @@ const ADMIN_API = axios.create({
 });
 
 ADMIN_API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('kavach_token');
+  const token = localStorage.getItem('kavach_admin_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -15,7 +15,5 @@ export const getAdminClaims   = () => ADMIN_API.get('/admin/claims');
 export const getAdminWorkers  = () => ADMIN_API.get('/admin/workers');
 export const getAdminSustainability = () => ADMIN_API.get('/admin/sustainability');
 export const getAdminHistoricalRisk = (city) => ADMIN_API.get(`/admin/historical-risk/${city}`);
-export const resolveAdminClaim = (id, action, notes = '') =>
-  ADMIN_API.put(`/admin/claims/${id}/resolve`, { action, notes });
 
 export default ADMIN_API;

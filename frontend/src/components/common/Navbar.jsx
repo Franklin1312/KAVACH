@@ -5,7 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import LanguageSelector from './LanguageSelector';
 
 export default function Navbar() {
-  const { worker, logout } = useAuth();
+  const { worker, logout, isAdmin } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,8 +14,11 @@ export default function Navbar() {
     { path: '/dashboard', label: t('nav.dashboard', 'Dashboard') },
     { path: '/policy', label: t('nav.policy', 'My Policy') },
     { path: '/claims', label: t('nav.claims', 'Claims') },
-    { path: '/admin', label: t('nav.admin', 'Admin') },
   ];
+
+  if (isAdmin) {
+    links.push({ path: '/admin', label: t('nav.admin', 'Admin') });
+  }
 
   return (
     <nav style={{

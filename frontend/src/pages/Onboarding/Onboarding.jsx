@@ -3,7 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import LanguageSelector from '../../components/common/LanguageSelector';
-import { sendOTP, verifyOTP, registerWorker } from '../../services/api';
+import { sendOTP, verifyOTP, registerWorker, loginAdmin } from '../../services/api';
+
+// ─── Admin credentials (hard-coded) ───────────────────────────────────────────
+// Change these values to update admin access credentials.
+const ADMIN_PHONE = process.env.REACT_APP_ADMIN_PHONE || '9999900000';
+// ──────────────────────────────────────────────────────────────────────────────
 
 const CITIES = [
   'chennai', 'mumbai', 'delhi', 'bengaluru',
@@ -48,15 +53,17 @@ function getShiftPreset(workingHours) {
 }
 
 export default function Onboarding() {
-  const { login } = useAuth();
+  const { login, adminLogin } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const RUPEE = '\u20B9';
 
+  // step -1 = admin password screen, 0 = phone entry, 1 = OTP, 2–3 = registration
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [openFaq, setOpenFaq] = useState(null);
+  const [adminPassword, setAdminPassword] = useState('');
 
   const NAV_SECTIONS = {
     'About': 'about',
@@ -124,6 +131,12 @@ export default function Onboarding() {
   const handleSendOTP = async () => {
     if (!phone || phone.length !== 10) return setError('Enter a valid 10-digit phone number');
     setError('');
+    // If admin phone detected — go to password screen instead of OTP
+    if (phone === ADMIN_PHONE) {
+      setAdminPassword('');
+      setStep(-1);
+      return;
+    }
     setLoading(true);
     try {
       const { data } = await sendOTP(phone);
@@ -131,6 +144,22 @@ export default function Onboarding() {
       setStep(1);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdminLogin = async () => {
+    setError('');
+    if (!adminPassword) return;
+
+    setLoading(true);
+    try {
+      const { data } = await loginAdmin(phone, adminPassword);
+      adminLogin(data.token, data.admin);
+      navigate('/admin', { replace: true });
+    } catch (err) {
+      setError(err.response?.data?.error || 'Incorrect admin credentials. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -189,6 +218,52 @@ export default function Onboarding() {
   };
 
   const renderCardBody = () => {
+    // ── Admin password screen ──────────────────────────────────────────────────
+    if (step === -1) {
+      return (
+        <>
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <div style={{ width: 60, height: 60, borderRadius: 16, background: 'linear-gradient(135deg, #0B3D91, #1A5BC4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', boxShadow: '0 8px 24px rgba(11,61,145,0.25)' }}>
+              <span style={{ fontSize: 28, color: '#fff', fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}>K</span>
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#0B3D91', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>Admin Access</div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: '#1A1A2E', margin: 0 }}>Enter Admin Password</h2>
+            <p style={{ color: '#6B7280', fontSize: 13, marginTop: 6 }}>Restricted area — authorised personnel only.</p>
+          </div>
+          <div style={{ background: '#F5F7FA', borderRadius: 10, padding: '10px 14px', marginBottom: 18, border: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13, color: '#5A6478' }}>Phone</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A2E' }}>+91 {phone}</span>
+          </div>
+          <div className="field">
+            <label className="label">Password</label>
+            <input
+              id="admin-password-input"
+              type="password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+              placeholder="Enter admin password"
+              style={{ letterSpacing: 2 }}
+              autoFocus
+            />
+          </div>
+          {error && <div className="error-msg" style={{ marginBottom: 16 }}>{error}</div>}
+          <button
+            id="admin-login-btn"
+            className="btn-primary"
+            onClick={handleAdminLogin}
+            disabled={loading || !adminPassword}
+            style={{ background: 'linear-gradient(135deg, #0B3D91, #1A5BC4)' }}
+          >
+            {loading ? 'Checking...' : 'Access Admin Dashboard →'}
+          </button>
+          <button className="btn-secondary" style={{ width: '100%', marginTop: 10 }} onClick={() => { setStep(0); setError(''); setAdminPassword(''); }}>
+            ← Back
+          </button>
+        </>
+      );
+    }
+
     if (step === 0) {
       return (
         <>

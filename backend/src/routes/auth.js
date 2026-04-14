@@ -5,8 +5,15 @@ const Worker  = require('../models/Worker');
 const AuditLog = require('../models/AuditLog');
 const { sendMessage } = require('../services/notificationService');
 
-const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+const generateWorkerToken = (id) =>
+  jwt.sign({ id, role: 'worker' }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+
+const generateAdminToken = (username) =>
+  jwt.sign({ username, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '12h' });
+
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '9999900000';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Kavach@Admin2026';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 
 const getDefaultShiftConfig = (workingHours = 'full') => {
   if (workingHours === 'part') {
@@ -73,6 +80,32 @@ router.post('/send-otp', async (req, res) => {
   }
 });
 
+// POST /api/auth/admin/login
+router.post('/admin/login', async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+
+    if (!phone || !password) {
+      return res.status(400).json({ error: 'Phone and password required' });
+    }
+
+    if (phone !== ADMIN_PHONE || password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Invalid admin credentials' });
+    }
+
+    res.json({
+      success: true,
+      token: generateAdminToken(ADMIN_USERNAME),
+      admin: {
+        username: ADMIN_USERNAME,
+        phone: ADMIN_PHONE,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/auth/verify-otp
 router.post('/verify-otp', async (req, res) => {
   try {
@@ -90,7 +123,7 @@ router.post('/verify-otp', async (req, res) => {
 
     res.json({
       success: true,
-      token: generateToken(worker._id),
+      token: generateWorkerToken(worker._id),
       isNewWorker: !worker.isVerified,
       worker: serializeWorker(worker),
     });
@@ -146,7 +179,7 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({
       success: true,
-      token: generateToken(worker._id),
+      token: generateWorkerToken(worker._id),
       worker: serializeWorker(worker),
     });
   } catch (err) {
