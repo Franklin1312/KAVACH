@@ -5,6 +5,7 @@ const Policy   = require('../models/Policy');
 const Claim    = require('../models/Claim');
 const AuditLog = require('../models/AuditLog');
 const { processPayout }          = require('../services/paymentService');
+const { logPayoutOnChain }       = require('../services/blockchainService');
 const { notifyClaimAutoApproved, notifyClaimManualReview } = require('../services/notificationService');
 const { getCityDisruptionProfile, getHistoricalRisk } = require('../services/historicalDisruption');
 const { protectAdmin } = require('../middleware/auth');
@@ -146,6 +147,27 @@ router.put('/claims/:id/approve', async (req, res) => {
     claim.razorpayPayoutId = payout.id;
     claim.paidAt           = new Date();
     claim.reviewNotes      = reviewNotes || 'Manually approved by admin';
+
+    // Log the manual payout on Sepolia ETH (non-blocking)
+    try {
+      const bcResult = await logPayoutOnChain({
+        claimId:      claim._id.toString(),
+        workerId:     worker._id.toString(),
+        amount:       claim.payoutAmount,
+        triggerType:  claim.triggerType,
+        triggerLevel: claim.triggerLevel,
+        fraudScore:   claim.fraudScore,
+        razorpayRef:  payout.id || 'mock',
+        timestamp:    new Date().toISOString(),
+      });
+      if (bcResult) {
+        claim.blockchainTxId       = bcResult.txHash;
+        claim.blockchainPayoutHash = bcResult.payoutHash;
+      }
+    } catch (bcError) {
+      console.error('[BLOCKCHAIN] Non-fatal admin error:', bcError.message);
+    }
+
     await claim.save();
 
     await notifyClaimAutoApproved(worker, claim, payout).catch(() => {});

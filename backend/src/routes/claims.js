@@ -9,6 +9,7 @@ const { enrichAndPredict } = require('../services/ditService');
 const { calculateFraudScore, getPayoutDecision } = require('../services/fraudService');
 const { LEVEL_MULTIPLIERS, verifyTriggerForWorker, buildSimulatedTrigger } = require('../services/triggerService');
 const { processPayout }   = require('../services/paymentService');
+const { logPayoutOnChain } = require('../services/blockchainService');
 const { findActivePolicyForWorker, ensurePolicyMarkedPaidForDevelopment } = require('../services/policyAccessService');
 const {
   notifyClaimAutoApproved,
@@ -301,6 +302,27 @@ router.post('/auto-process', protect, async (req, res) => {
       claim.payoutStatus     = 'paid';
       claim.razorpayPayoutId = payout.id;
       claim.paidAt           = new Date();
+
+      // Log payout receipt on Polygon Amoy Testnet (non-blocking)
+      try {
+        const bcResult = await logPayoutOnChain({
+          claimId:      claim._id.toString(),
+          workerId:     worker._id.toString(),
+          amount:       payoutAmount,
+          triggerType:  verifiedTrigger.triggerType,
+          triggerLevel: verifiedTrigger.triggerLevel,
+          fraudScore,
+          razorpayRef:  payout.id || 'mock',
+          timestamp:    new Date().toISOString(),
+        });
+        if (bcResult) {
+          claim.blockchainTxId       = bcResult.txHash;
+          claim.blockchainPayoutHash = bcResult.payoutHash;
+        }
+      } catch (bcErr) {
+        console.error('[BLOCKCHAIN] Non-fatal error:', bcErr.message);
+      }
+
       await claim.save();
       await notifyClaimAutoApproved(worker, claim, payout).catch(() => {});
       await Worker.findByIdAndUpdate(worker._id, { claimsFreeWeeks: 0 });
@@ -311,6 +333,27 @@ router.post('/auto-process', protect, async (req, res) => {
         try {
           const payout = await processPayout(worker, payoutAmount, claim._id);
           claim.payoutStatus = 'paid'; claim.razorpayPayoutId = payout.id; claim.paidAt = new Date();
+
+          // Log payout receipt on Polygon Amoy Testnet (non-blocking)
+          try {
+            const bcResult = await logPayoutOnChain({
+              claimId:      claim._id.toString(),
+              workerId:     worker._id.toString(),
+              amount:       payoutAmount,
+              triggerType:  verifiedTrigger.triggerType,
+              triggerLevel: verifiedTrigger.triggerLevel,
+              fraudScore,
+              razorpayRef:  payout.id || 'mock',
+              timestamp:    new Date().toISOString(),
+            });
+            if (bcResult) {
+              claim.blockchainTxId       = bcResult.txHash;
+              claim.blockchainPayoutHash = bcResult.payoutHash;
+            }
+          } catch (bcErr) {
+            console.error('[BLOCKCHAIN] Non-fatal error:', bcErr.message);
+          }
+
           await claim.save();
           await notifyClaimAutoApproved(worker, claim, payout).catch(() => {});
         } catch (e) { console.error('Delayed payout error:', e.message); }

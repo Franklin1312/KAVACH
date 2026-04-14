@@ -55,6 +55,10 @@ const ClaimSchema = new mongoose.Schema(
     razorpayPayoutId: String,
     paidAt:           Date,
 
+    // Polygon Amoy Testnet — on-chain payout logging
+    blockchainTxId:       String,   // Polygon transaction hash (links to polygonscan)
+    blockchainPayoutHash: String,   // SHA-256 hash of the payout receipt logged on-chain
+
     fraudScore:  { type: Number, default: 0 },
     ppcsScore:   { type: Number, default: 100 },
     fraudFlags:  [String],

@@ -58,7 +58,7 @@ export default function AdminDashboard() {
       getAdminStats().then(({ data }) => setStats(data)),
       getAdminClaims().then(({ data }) => setClaims(data.claims || [])),
       getAdminWorkers().then(({ data }) => setWorkers(data.workers || [])),
-      getAdminSustainability().then(({ data }) => setSustainability(data)).catch(() => {}),
+      getAdminSustainability().then(({ data }) => setSustainability(data)).catch(() => { }),
     ])
       .catch((err) => handleAdminError(err, 'Could not load admin dashboard'))
       .finally(() => setLoading(false));
@@ -203,12 +203,12 @@ export default function AdminDashboard() {
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>All Claims</div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead><tr style={{ color: '#9CA3AF', textAlign: 'left' }}>{['Worker', 'City', 'Trigger', 'Predicted', 'Payout', 'Fraud', 'PPCS', 'Status', 'Date', 'Action'].map((heading) => <th key={heading} style={{ padding: '10px 12px', borderBottom: '2px solid #E5E7EB', fontWeight: 600, fontSize: 12 }}>{heading}</th>)}</tr></thead>
+                <thead><tr style={{ color: '#9CA3AF', textAlign: 'left' }}>{['Worker', 'City', 'Trigger', 'Predicted', 'Payout', 'Fraud', 'PPCS', 'Status', 'Payout ID', 'Date', 'Action'].map((heading) => <th key={heading} style={{ padding: '10px 12px', borderBottom: '2px solid #E5E7EB', fontWeight: 600, fontSize: 12 }}>{heading}</th>)}</tr></thead>
                 <tbody>
                   {claims.map((claim) => {
                     const statusColor = STATUS_COLORS[claim.payoutStatus] || STATUS_COLORS.pending;
                     const actionState = actionLoading[claim._id];
-                    const needsAction = ['pending', 'manual_review'].includes(claim.payoutStatus);
+                    const needsAction = ['pending', 'manual_review', 'approved'].includes(claim.payoutStatus);
                     return (
                       <tr key={claim._id} style={{ borderBottom: '1px solid #F0F0F0', background: needsAction ? '#FFFBF0' : 'transparent' }}>
                         <td style={{ padding: '12px 12px', fontWeight: 600 }}>{claim.worker?.name || '-'}</td>
@@ -219,6 +219,7 @@ export default function AdminDashboard() {
                         <td style={{ padding: '12px 12px', color: claim.fraudScore > 60 ? '#E53935' : claim.fraudScore > 30 ? '#F5A623' : '#00A86B', fontWeight: 600 }}>{claim.fraudScore}</td>
                         <td style={{ padding: '12px 12px' }}>{claim.ppcsScore}</td>
                         <td style={{ padding: '12px 12px' }}><span style={{ padding: '3px 10px', borderRadius: 50, fontSize: 11, fontWeight: 600, background: statusColor.bg, color: statusColor.color }}>{claim.payoutStatus.replace('_', ' ').toUpperCase()}</span></td>
+                        <td style={{ padding: '12px 12px' }}>{claim.blockchainTxId ? <a href={`https://sepolia.etherscan.io/tx/${claim.blockchainTxId}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0B3D91', fontFamily: 'monospace', fontSize: 11, textDecoration: 'none', background: '#EBF0FA', padding: '3px 8px', borderRadius: 6 }} title={claim.blockchainTxId}>{claim.blockchainTxId.slice(0, 6)}...{claim.blockchainTxId.slice(-4)}</a> : <span style={{ color: '#D1D5DB', fontSize: 12 }}>—</span>}</td>
                         <td style={{ padding: '12px 12px', color: '#9CA3AF' }}>{new Date(claim.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
                         <td style={{ padding: '12px 12px' }}>{needsAction ? <div style={{ display: 'flex', gap: 6 }}><button onClick={() => handleApprove(claim._id)} disabled={!!actionState} style={{ background: '#E5F7EF', color: '#007A4D', border: '1px solid #00A86B', padding: '4px 12px', borderRadius: 6, fontSize: 12 }}>{actionState === 'approving' ? '...' : 'Pay'}</button><button onClick={() => handleReject(claim._id)} disabled={!!actionState} style={{ background: '#FDEAEA', color: '#E53935', border: '1px solid #E53935', padding: '4px 12px', borderRadius: 6, fontSize: 12 }}>{actionState === 'rejecting' ? '...' : 'Reject'}</button></div> : <span style={{ color: '#9CA3AF', fontSize: 12 }}>-</span>}</td>
                       </tr>
