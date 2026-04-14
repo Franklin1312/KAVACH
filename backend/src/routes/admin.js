@@ -97,8 +97,8 @@ router.get('/workers', async (req, res) => {
   try {
     const workers = await Worker.find({ isVerified: true })
       .select('name phone city zone platforms declaredWeeklyIncome zoneRiskFactor fraudScore claimsFreeWeeks createdAt')
-      .sort({ createdAt: -1 })
-      .limit(50);
+      .sort({ city: 1, createdAt: -1 })
+      .limit(500);
     res.json({ success: true, workers });
   } catch (err) {
     res.status(500).json({ error: err.message });

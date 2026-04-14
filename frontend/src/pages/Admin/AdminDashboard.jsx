@@ -237,17 +237,69 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {tab === 'workers' && (
-          <div className="card">
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Registered Workers</div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead><tr style={{ color: '#9CA3AF', textAlign: 'left' }}>{['Name', 'Phone', 'City', 'Zone', 'Platform', 'Weekly Income', 'Zone Risk', 'Claims-Free', 'Joined'].map((heading) => <th key={heading} style={{ padding: '10px 12px', borderBottom: '2px solid #E5E7EB', fontWeight: 600, fontSize: 12 }}>{heading}</th>)}</tr></thead>
-                <tbody>{workers.map((worker) => <tr key={worker._id} style={{ borderBottom: '1px solid #F0F0F0' }}><td style={{ padding: '12px 12px', fontWeight: 600 }}>{worker.name}</td><td style={{ padding: '12px 12px', color: '#5A6478' }}>{worker.phone}</td><td style={{ padding: '12px 12px', textTransform: 'capitalize' }}>{worker.city}</td><td style={{ padding: '12px 12px', color: '#5A6478' }}>{worker.zone}</td><td style={{ padding: '12px 12px' }}>{worker.platforms?.map((platform) => platform.name).join(', ')}</td><td style={{ padding: '12px 12px', fontWeight: 600 }}>{RUPEE}{worker.declaredWeeklyIncome?.toLocaleString('en-IN')}</td><td style={{ padding: '12px 12px', fontWeight: 600, color: worker.zoneRiskFactor >= 1.3 ? '#E53935' : worker.zoneRiskFactor <= 0.85 ? '#00A86B' : '#F5A623' }}>{worker.zoneRiskFactor}x</td><td style={{ padding: '12px 12px', color: '#5A6478' }}>{worker.claimsFreeWeeks}w</td><td style={{ padding: '12px 12px', color: '#9CA3AF' }}>{new Date(worker.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td></tr>)}</tbody>
-              </table>
+        {tab === 'workers' && (() => {
+          // Group workers by city
+          const grouped = workers.reduce((acc, w) => {
+            const city = (w.city || 'Unknown').toLowerCase();
+            if (!acc[city]) acc[city] = [];
+            acc[city].push(w);
+            return acc;
+          }, {});
+          const cities = Object.keys(grouped).sort();
+
+          return (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'Outfit, sans-serif' }}>Registered Workers</div>
+                  <div style={{ color: '#9CA3AF', fontSize: 13, marginTop: 2 }}>{workers.length} workers across {cities.length} cities</div>
+                </div>
+              </div>
+
+              {cities.map((city) => (
+                <div key={city} className="card" style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
+                  {/* City Header */}
+                  <div style={{ background: 'linear-gradient(135deg, #0B3D91 0%, #1A5BC4 100%)', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', textTransform: 'capitalize', fontFamily: 'Outfit, sans-serif' }}>{city}</div>
+                    <span style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: 20, fontSize: 11, fontWeight: 700, padding: '2px 10px' }}>
+                      {grouped[city].length} worker{grouped[city].length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+
+                  {/* Workers Table */}
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ color: '#9CA3AF', textAlign: 'left', background: '#F9FAFB' }}>
+                          {['Name', 'Phone', 'Zone', 'Platform', 'Weekly Income', 'Zone Risk', 'Claims-Free', 'Joined'].map((h) => (
+                            <th key={h} style={{ padding: '8px 16px', borderBottom: '1px solid #E5E7EB', fontWeight: 600, fontSize: 11 }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {grouped[city].map((worker) => (
+                          <tr key={worker._id} style={{ borderBottom: '1px solid #F0F0F0' }}>
+                            <td style={{ padding: '11px 16px', fontWeight: 600 }}>{worker.name}</td>
+                            <td style={{ padding: '11px 16px', color: '#5A6478' }}>{worker.phone}</td>
+                            <td style={{ padding: '11px 16px', color: '#5A6478' }}>{worker.zone}</td>
+                            <td style={{ padding: '11px 16px' }}>{worker.platforms?.map((p) => p.name).join(', ') || '—'}</td>
+                            <td style={{ padding: '11px 16px', fontWeight: 600 }}>{RUPEE}{worker.declaredWeeklyIncome?.toLocaleString('en-IN')}</td>
+                            <td style={{ padding: '11px 16px', fontWeight: 700, color: worker.zoneRiskFactor >= 1.3 ? '#E53935' : worker.zoneRiskFactor <= 0.85 ? '#00A86B' : '#F5A623' }}>
+                              {worker.zoneRiskFactor}x
+                            </td>
+                            <td style={{ padding: '11px 16px', color: '#5A6478' }}>{worker.claimsFreeWeeks}w</td>
+                            <td style={{ padding: '11px 16px', color: '#9CA3AF' }}>{new Date(worker.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        )}
+          );
+        })()}
+
 
         {tab === 'stress' && (
           <div>
