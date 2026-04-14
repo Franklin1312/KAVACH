@@ -178,6 +178,18 @@ function splitIntoSentences(content = '') {
     .filter((line) => !line.includes('|---|'));
 }
 
+function sanitizeAnswerText(answer = '') {
+  return String(answer)
+    .replace(/\baccording to the readme\b[:,]?\s*/gi, '')
+    .replace(/\bin the readme\b[:,]?\s*/gi, '')
+    .replace(/\bthe readme (describes|explains|states|says|shows) that\b[:,]?\s*/gi, '')
+    .replace(/\bbased on the readme\b[:,]?\s*/gi, '')
+    .replace(/\bfrom the readme\b[:,]?\s*/gi, '')
+    .replace(/\bREADME context\b[:,]?\s*/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function bestSnippets(question, sections) {
   const questionTokens = tokenize(question);
 
@@ -308,7 +320,7 @@ function fallbackAnswer(question, sections) {
       .join('\n\n');
 
     return {
-      answer: `${summary}\n\nIf you want, I can also explain this in simpler terms or focus only on claims, policy, payouts, or premiums.`,
+      answer: sanitizeAnswerText(`${summary}\n\nIf you want, I can also explain this in simpler terms or focus only on claims, policy, payouts, or premiums.`),
       grounded: true,
       sources: sections.map((section) => section.heading),
       suggestions: DEFAULT_SUGGESTIONS,
@@ -328,7 +340,7 @@ function fallbackAnswer(question, sections) {
     .join('\n');
 
   return {
-    answer: `${snippets}\n\nIf you want, I can also explain this in simpler terms or focus only on claims, policy, payouts, or premiums.`,
+    answer: sanitizeAnswerText(`${snippets}\n\nIf you want, I can also explain this in simpler terms or focus only on claims, policy, payouts, or premiums.`),
     grounded: true,
     sources: sections.map((section) => section.heading),
     suggestions: DEFAULT_SUGGESTIONS,
@@ -396,7 +408,7 @@ async function generateWithLlm({ question, history, sections }) {
   if (!answer) return null;
 
   return {
-    answer,
+    answer: sanitizeAnswerText(answer),
     grounded: sections.length > 0,
     sources: sections.map((section) => section.heading),
     suggestions: DEFAULT_SUGGESTIONS,

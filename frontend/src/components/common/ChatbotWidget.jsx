@@ -80,7 +80,7 @@ export default function ChatbotWidget() {
   return (
     <div className="chatbot-shell">
       {isOpen && (
-        <div className="chatbot-panel">
+        <div className={`chatbot-panel${location.pathname === '/' ? ' chatbot-panel-landing' : ''}`}>
           <div className="chatbot-header">
             <div>
               <div className="chatbot-title">Rakshak</div>
