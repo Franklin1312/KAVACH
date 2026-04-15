@@ -227,41 +227,65 @@ router.put('/claims/:id/reject', async (req, res) => {
 router.post('/stress-test', async (req, res) => {
   try {
     const { days = 14, triggerType = 'rain', affectedPct = 0.7 } = req.body;
+    const normalizedDays = Math.max(1, Number(days) || 14);
+    const normalizedAffectedPct = Math.max(0, Math.min(Number(affectedPct) || 0, 1));
 
-    const activePolicies = await Policy.find({ status: 'active' })
-      .populate('worker', 'verifiedWeeklyIncome declaredWeeklyIncome coveragePct city');
+    const [activePolicySummary, premiumData, payoutData] = await Promise.all([
+      Policy.aggregate([
+        { $match: { status: 'active' } },
+        {
+          $lookup: {
+            from: 'workers',
+            localField: 'worker',
+            foreignField: '_id',
+            as: 'worker',
+          },
+        },
+        { $unwind: '$worker' },
+        {
+          $group: {
+            _id: null,
+            totalPolicies: { $sum: 1 },
+            totalWeeklyPremium: { $sum: { $ifNull: ['$premium.finalAmount', 0] } },
+            totalWeeklyIncome: {
+              $sum: {
+                $ifNull: [
+                  '$worker.verifiedWeeklyIncome',
+                  { $ifNull: ['$worker.declaredWeeklyIncome', 5000] },
+                ],
+              },
+            },
+          },
+        },
+      ]),
+      Policy.aggregate([{ $group: { _id: null, total: { $sum: '$premium.finalAmount' } } }]),
+      Claim.aggregate([{ $match: { payoutStatus: 'paid' } }, { $group: { _id: null, total: { $sum: '$payoutAmount' } } }]),
+    ]);
 
-    const totalPolicies   = activePolicies.length;
-    const affectedCount   = Math.round(totalPolicies * affectedPct);
-
-    // Average daily income = weekly / 6
-    const avgDailyIncome  = activePolicies.reduce((sum, p) => {
-      const income = p.worker?.verifiedWeeklyIncome || p.worker?.declaredWeeklyIncome || 5000;
-      return sum + (income / 6);
-    }, 0) / (totalPolicies || 1);
+    const policySummary = activePolicySummary[0] || {};
+    const totalPolicies = policySummary.totalPolicies || 0;
+    const affectedCount = Math.round(totalPolicies * normalizedAffectedPct);
+    const avgWeeklyIncome = totalPolicies > 0 ? (policySummary.totalWeeklyIncome || 0) / totalPolicies : 5000;
+    const avgDailyIncome = avgWeeklyIncome / 6;
 
     // Payout per affected worker per day = coveragePct × daily income × level multiplier
     const avgCoveragePct     = 0.70;
     const levelMultiplier    = 0.85; // average of Level 2 + 3
     const payoutPerWorkerDay = avgDailyIncome * avgCoveragePct * levelMultiplier;
-    const totalProjectedPayout = affectedCount * payoutPerWorkerDay * days;
+    const totalProjectedPayout = affectedCount * payoutPerWorkerDay * normalizedDays;
 
     // Projected premiums for the same period (not just historical)
     // Weekly premium per worker × (days / 7) weeks × all active workers
-    const avgWeeklyPremium = activePolicies.reduce((sum, p) => {
-      return sum + (p.premium?.finalAmount || 0);
-    }, 0) / (totalPolicies || 1);
-    const projectedPremiums = avgWeeklyPremium * (days / 7) * totalPolicies;
+    const avgWeeklyPremium = totalPolicies > 0 ? (policySummary.totalWeeklyPremium || 0) / totalPolicies : 0;
+    const projectedPremiums = avgWeeklyPremium * (normalizedDays / 7) * totalPolicies;
 
     // Historical premiums (all-time)
-    const premiumData     = await Policy.aggregate([{ $group: { _id: null, total: { $sum: '$premium.finalAmount' } } }]);
     const totalHistoricalPremiums = premiumData[0]?.total || 0;
 
     // Total premium pool = historical + projected incoming during the event
     const totalPremiumPool = totalHistoricalPremiums + projectedPremiums;
 
     // Existing payouts
-    const payoutData      = await Claim.aggregate([{ $match: { payoutStatus: 'paid' } }, { $group: { _id: null, total: { $sum: '$payoutAmount' } } }]);
     const existingPayouts = payoutData[0]?.total || 0;
 
     // --- Without reinsurance ---
@@ -281,9 +305,9 @@ router.post('/stress-test', async (req, res) => {
     res.json({
       success: true,
       scenario: {
-        days,
+        days: normalizedDays,
         triggerType,
-        affectedPct:             (affectedPct * 100).toFixed(0) + '%',
+        affectedPct:             (normalizedAffectedPct * 100).toFixed(0) + '%',
         totalActivePolicies:     totalPolicies,
         projectedAffectedWorkers: affectedCount,
         avgDailyIncomePerWorker: Math.round(avgDailyIncome),
