@@ -6,14 +6,14 @@
 
 KAVACH is a comprehensive, production-ready insure-tech ecosystem. Our architecture unifies artificial intelligence, on-chain immutability, and micro-actuarial models.
 
-*   🧠 **AI Digital Income Twin (DIT):** A personalized XGBoost model that accurately predicts the exact revenue a worker *would have earned* during a disruption window based on local zone, cohort, and personal history.
-*   🚦 **7-Layer Fraud Ecosystem:** From GPS tracking and cluster behavioral baseline checking, to isolation forests detecting coordinated syndicates, we guarantee <50% target BCRs (Burning Cost Ratio) by automatically denying falsified claims. 
-*   🔗 **Blockchain & Smart Contract Validation:** Claims are immutably written to on-chain ledgers leveraging **Ethers.js** and the **Polygon Amoy Testnet**, establishing absolute auditability and transparency.
-*   📡 **Multi-Source Parametric APIs:** Dynamic trigger thresholds connected to live **OpenWeatherMap APIs**, **CPCB AQI API Monitors**, and automated heartbeats against Swiggy/Zomato verifying complete area un-serviceability.
-*   💸 **Zero-Touch Payouts via Razorpay API:** 100% automated lifecycle from claim detection to bank payout, securely utilizing **Razorpay's Payment Webhooks & UPI Gateways** without requiring any manual worker intervention.
-*   🔒 **DPDP Act 2023 Compliance:** End-to-end data consent pipelines enforcing regulatory tracking and transparent compliance reporting at the admin level. 
-*   🛡️ **Adverse Selection Lockouts & Engagement:** Dynamic risk limiters immediately halt localized policy purchases when 48-hour Level 3 alerts trigger. Enforces strict 90/120 minimum active-day validation mechanisms.
-*   🌍 **Fully Localized PWA Architecture:** A lightweight React-based Progressive Web App featuring seamless real-time translation (English, Hindi, Tamil) via context states, combined with a customized global AI Chatbot widget specifically designed for mobile-first gig demographics.
+*   🧠 **AI Digital Income Twin (DIT):** A stacked ensemble model (XGBoost + LightGBM + Ridge meta-learner) with R² 0.9874 and MAE ₹16.79 that accurately predicts the exact revenue a worker *would have earned* during a disruption window — calibrated on 60,000 training samples and anchored to IDInsight 2024 real-world Indian gig worker earnings data.
+*   🚦 **7-Layer Fraud Engine:** GPS zone validation, platform activity cross-validation, new-account cooling-off, historical behavioral baseline, per-worker velocity anomaly detection, duplicate claim prevention, last-minute policy purchase detection, and UPI payout-destination ring detection — all feeding into a Physical Presence Confidence Score (PPCS) for a final auto-approve / soft-flag / verify / manual-review decision.
+*   🔗 **Blockchain Audit Trail:** Approved payouts are immutably logged on the **Sepolia ETH Testnet** via Ethers.js — a SHA-256 hash of the payout receipt is embedded in a zero-value self-transfer transaction, creating a publicly verifiable record on Etherscan.
+*   📡 **Multi-Source Parametric Triggers:** 7 trigger types (rain, AQI, flood, curfew, platform outage, zone freeze, heat) verified against live OpenWeatherMap, CPCB AQI, and platform heartbeat APIs with ward-level geo-precision across 16 Indian cities.
+*   💸 **Zero-Touch Payouts via Razorpay:** Fully automated lifecycle from claim detection to UPI payout (with IMPS fallback), using Razorpay Contacts, Fund Accounts, and Payout APIs. Mock mode is available for local development.
+*   🔒 **DPDP Act 2023 Compliance:** End-to-end digital consent capture (GPS, bank details, platform API polling) stored on each worker record with timestamp for full audit-trail accountability.
+*   🛡️ **Adverse Selection Lockouts:** Dynamic lockouts halt new policy enrollments during Level 3+ events; 90/120-day engagement tracking (Social Security Code 2020) enforces minimum platform activity before policy eligibility.
+*   🌍 **Multilingual PWA:** A React-based Progressive Web App with real-time English / Hindi / Tamil localization via React Context, and a global AI chatbot widget powered by the Claude API — optimized for mobile-first gig demographics.
 
 ---
 
@@ -24,14 +24,15 @@ KAVACH is a comprehensive, production-ready insure-tech ecosystem. Our architect
 3. [Application Workflow & Persona Scenarios](#3-application-workflow--persona-scenarios)
 4. [Weekly Premium Model — How It Works](#4-weekly-premium-model--how-it-works)
 5. [Parametric Trigger Architecture](#5-parametric-trigger-architecture)
-6. [AI/ML Integration Plan](#6-aiml-integration-plan)
+6. [AI/ML Integration — Actual Implementation](#6-aiml-integration--actual-implementation)
 7. [Fraud Detection Architecture](#7-fraud-detection-architecture)
 8. [Platform Choice: Progressive Web App (PWA)](#8-platform-choice-progressive-web-app-pwa)
 9. [Tech Stack & Architecture](#9-tech-stack--architecture)
-10. [6-Week Development Plan](#10-6-week-development-plan)
-11. [Loophole Analysis & Failure-Proofing](#11-loophole-analysis--failure-proofing)
-12. [Adversarial Defense & Anti-Spoofing Strategy](#12-adversarial-defense--anti-spoofing-strategy)
-13. [Recent Platform Implementations & Scaling](#13-recent-platform-implementations--scaling)
+10. [Setup & Running the Platform](#10-setup--running-the-platform)
+11. [API Reference](#11-api-reference)
+12. [Loophole Analysis & Failure-Proofing](#12-loophole-analysis--failure-proofing)
+13. [Adversarial Defense & Anti-Spoofing Strategy](#13-adversarial-defense--anti-spoofing-strategy)
+14. [Recent Platform Implementations & Scaling](#14-recent-platform-implementations--scaling)
 
 ---
 
@@ -43,12 +44,12 @@ The problem with existing parametric insurance globally is that it pays a **flat
 
 **KAVACH solves this with a breakthrough concept: the Digital Income Twin (DIT).**
 
-Rather than paying flat amounts when a trigger fires, KAVACH builds a personalized AI model for each worker — their Digital Income Twin — that knows precisely what they would have earned during any time window, based on their own historical earning patterns, zone, shift, and platform. When a disruption occurs:
+Rather than paying flat amounts when a trigger fires, KAVACH builds a shared ML model that knows precisely what any worker would have earned during any time window, based on their own weekly income, zone, shift, platform, and real-world delivery dynamics. When a disruption occurs:
 
 1. **External triggers confirm** the disruption is real (multi-source validation)
 2. **The DIT predicts** what the worker would have earned in that period
 3. **Platform activity data confirms** the worker genuinely couldn't work
-4. **Payout = Predicted Loss**, not a flat amount
+4. **Payout = Predicted Loss × Coverage % × Trigger Level Multiplier**
 
 This means every payout is individually calibrated, not one-size-fits-all. A part-time student delivering evenings gets paid for their actual off-hours. A full-time professional runner earns proportionally more protection. The model is fair, sustainable, and fraud-resistant by design.
 
@@ -98,122 +99,105 @@ KAVACH is designed for **all four**, with city-specific risk models and localize
 ### Workflow Overview
 
 ```
-WORKER ONBOARDING
-     │
-     ▼
-[1] REGISTRATION & KYC
-     • Phone number + Aadhaar verification
-     • Platform ID linkage (Zomato Partner ID / Swiggy Partner ID)
-     • Zone selection (home zone + active delivery zones)
-     • Income declaration (cross-verified with platform data)
-     │
-     ▼
-[2] RISK PROFILING
-     • AI risk score generated (zone risk, season, platform seniority)
-     • Weekly premium quoted
-     • Coverage tier selection (Basic 50% / Standard 70% / Premium 85%)
-     │
-     ▼
-[3] WEEKLY POLICY ACTIVATION
-     • UPI AutoPay mandate for weekly premium (e.g., every Monday)
-     • Policy active from 00:01 Monday to 23:59 Sunday
-     • Worker receives WhatsApp confirmation
-     │
-     ▼
-[4] REAL-TIME DISRUPTION MONITORING (automated, continuous)
-     • Weather APIs + AQI monitors + traffic + civil alert feeds
-     • Disruption threshold crossed → Trigger Evaluation Engine fires
-     │
-     ▼
-[5] AUTOMATED CLAIM PROCESS
-     • System cross-validates disruption (3-source confirmation)
-     • Worker's platform activity confirmed zero/reduced
-     • DIT calculates predicted income loss for the window
-     • Fraud engine runs anomaly checks
-     • Payout amount computed and approved (or flagged for manual review)
-     │
-     ▼
-[6] PAYOUT
-     • UPI transfer to registered account within 15–30 minutes
-     • WhatsApp/SMS notification with full breakdown
-     • Worker dashboard updated
+Worker Onboarding
+        │
+        ▼
+Phone OTP → Registration (name, city, zone, platform, income, UPI, shift)
+        │
+        ▼
+Policy Activation (weekly premium calculated, Razorpay subscription created)
+        │
+        ▼
+[Trigger Monitor runs every 30 minutes via cron]
+        │ rain / AQI / flood / curfew / platform_outage / zone_freeze / heat detected
+        ▼
+POST /api/claims/auto-process
+        │
+        ├── DIT Prediction (ML service or rule-based fallback)
+        │       predicted_earnings - actual_earned = net_loss
+        │
+        ├── Fraud Score Calculation (7 layers → 0–100)
+        │       + Physical Presence Confidence Score (PPCS)
+        │
+        ├── Payout Decision:
+        │       Fraud ≤ 30 & PPCS ≥ 80  → Auto-Approve  (payout in minutes)
+        │       Fraud ≤ 60 & PPCS ≥ 50  → Soft Flag     (held 2 hours)
+        │       Fraud ≤ 80              → Verify         (WhatsApp photo request)
+        │       Fraud > 80              → Manual Review  (up to 24 hours)
+        │
+        ├── Razorpay UPI Payout (or IMPS fallback)
+        │
+        └── Blockchain Log (Sepolia ETH — SHA-256 receipt hash on-chain)
+                │
+                └── WhatsApp Notification to Worker
 ```
 
 ---
 
-### Scenario A: Heavy Rain Disruption (Ravi, Chennai, Tuesday, 7 PM)
+### Scenario A: Heavy Rain Disruption — Ravi, Chennai
 
-**Situation:** Monsoon rainfall reaches 45mm/hour in Anna Nagar zone at 7:05 PM.
+**Trigger:** OpenWeatherMap reports 78mm rainfall in 3 hours over T. Nagar zone (Level 3).
 
-| Step | Action | System Response |
-|---|---|---|
-| 7:05 PM | IMD rainfall API reports 45mm/hr in pin codes 600040, 600101 | Trigger monitoring detects threshold breach |
-| 7:07 PM | Cross-validated with OpenWeatherMap (47mm/hr) + Twitter/X flood alerts API (geo-tagged #ChennaiRains in zone) | 3/3 sources confirm → Trigger fires |
-| 7:08 PM | Zomato Partner API shows Ravi: 0 new orders assigned in last 20 mins, app active but no delivery | Activity validation: genuine stoppage |
-| 7:09 PM | DIT model: "Ravi typically earns ₹280 between 7–9 PM on Tuesdays" | Predicted loss window: 7–9 PM = ₹280 |
-| 7:09 PM | Fraud engine: 23 other Zomato partners in same zone also idle. Score: LOW FRAUD RISK | Green flag |
-| 7:10 PM | Payout: 70% coverage × ₹280 = ₹196, auto-approved | UPI transfer initiated |
-| 7:12 PM | Ravi receives ₹196 in his UPI account + WhatsApp: "KAVACH Alert: ₹196 income protection payout for rain disruption, 7–9 PM, Anna Nagar" | Worker notified |
-
-**If rain stops at 9 PM:** System re-evaluates every 30 minutes. If Ravi resumes orders by 9:30 PM, his DIT notes the actual resumed earnings and no further payout is issued.
-
----
-
-### Scenario B: Platform Outage (Swiggy App Down, Priya, Delhi, Friday)
-
-**Situation:** Swiggy backend goes down from 1:00 PM to 3:30 PM on a Friday due to server issues.
-
-- **Trigger source:** Swiggy API response time >10 seconds continuously for 15 minutes (monitored via heartbeat) + Downdetector API spike + social media volume
-- **DIT predicts:** Priya earns ₹310 on Friday 1–3 PM (peak lunch slot)
-- **Validation:** Swiggy Partner App shows 0 order assignments; GPS shows Priya stationary at pickup zone (she was ready to work, not resting at home)
-- **Payout:** 70% × ₹310 = ₹217 within 15 minutes of outage confirmation
+**What KAVACH does:**
+1. Trigger monitor (running every 30 min) detects rainfall above Level 3 threshold (75mm/3hr)
+2. Checks Ravi's active policy for this week — policy confirmed active, premium paid
+3. Calls ML service: `POST /predict` with `weekly_income=6100, city=Urban, zone=t_nagar, weather=Stormy, traffic=High`
+4. ML returns `predicted_earnings=₹340` for the 2-hour disruption window with confidence 0.84
+5. Fraud check: GPS zone match ✓, no earnings during window ✓, account age > 14 days ✓, no duplicates ✓ → fraud score 12
+6. PPCS calculated from device signals → 91
+7. **Auto-approved**: payout = ₹340 × 70% × 1.0 (Level 3 multiplier) = **₹238**
+8. Razorpay UPI payout initiated to `ravi@upi`
+9. Payout hash logged on Sepolia ETH (verifiable on Etherscan)
+10. WhatsApp: *"KAVACH Payout: ₹238 has been sent to your UPI account. Disruption: Heavy Rain (Level 3)."*
 
 ---
 
-### Scenario C: Curfew/Bandh (Suresh, Bengaluru)
+### Scenario B: Platform Outage — Priya, Delhi
 
-**Situation:** An unplanned district-level curfew imposed at 6 AM, effective until 8 PM.
+**Trigger:** Swiggy heartbeat API reports p95 latency >8s for 20 minutes (Level 2 outage).
 
-- **Trigger source:** Karnataka government press release API + Bengaluru Police Twitter feed + geo-tagged news API (all within 10 minutes of curfew announcement)
-- **DIT predicts:** Suresh earns ₹620 on a typical Thursday (8 AM–8 PM combined Zomato + Swiggy)
-- **Pre-emptive policy trigger:** System flags the policy active before Suresh even wakes up
-- **Payout:** 70% × ₹620 = ₹434 processed at 8:01 AM
-
-**Key edge case handled:** If Suresh somehow manages to still complete 4 deliveries via a less restricted zone — his actual earnings are deducted. Payout = 70% × (₹620 - ₹180 actual earned) = ₹308. Not ₹434. The DIT tracks actual platform earnings in real time.
+- Payout = predicted_loss × 70% × 0.85 (Level 2 multiplier)
+- Platform outage triggers a shorter disruption window (45–90 min per level)
+- Fraud check: platform shows zero orders completed → Layer 2 passes cleanly
+- Auto-approved payout dispatched
 
 ---
 
-### Scenario D: Partial Disruption + Multi-Platform Worker (Arjun, Mumbai)
+### Scenario C: Curfew/Bandh — Arjun, Mumbai
 
-**Situation:** Waterlogging blocks deliveries in South Mumbai but not Bandra. Arjun works in South Mumbai for Zomato.
+**Trigger:** Section 144 issued for Bandra zone.
 
-- **Trigger:** Flood zone localized to pin codes 400001–400005 only
-- **KAVACH's hyper-local engine** confirms: Arjun's active zone IS in the flood zone (GPS verified)
-- **Arjun is also registered on Swiggy**, but Swiggy routes him to Bandra — he earns ₹200 there
-- **DIT predicts:** Total expected = ₹800 for the day (combined both platforms)
-- **Net verified loss:** ₹800 - ₹200 (Swiggy earnings) = ₹600
-- **Payout:** 70% × ₹600 = ₹420
+- Level 4 curfew trigger (1440-minute window)
+- Both police API and PIB confirm → multi-source threshold met
+- Payout = net_loss × 85% (premium tier) × 1.0 (Level 4 capped at policy max)
+- Maximum payout capped at policy `maxPayout` = 85% of weekly income
 
-**This prevents double-dipping:** Arjun cannot claim full income loss when he was still earning on a second platform.
+---
+
+### Scenario D: Partial Disruption — Multi-Platform Worker (Suresh, Bengaluru)
+
+**Trigger:** AQI 430 in Koramangala zone (Level 4 AQI).
+
+- Suresh earns on both Swiggy and Zomato
+- DIT predicts ₹480 in that 4-hour window
+- Swiggy shows ₹90 actually earned; Zomato shows zero
+- Net loss = ₹480 − ₹90 = ₹390
+- Payout = ₹390 × 70% × 1.0 = **₹273** (net, not gross)
+- Cross-platform income aggregation prevents double-dipping
 
 ---
 
 ## 4. Weekly Premium Model — How It Works
 
-### Pricing Philosophy
-
-KAVACH uses a **micro-actuarial weekly pricing model** — not monthly, not annual. Every Monday, the premium for the coming week is recalculated using the latest data about:
-- Historical disruption frequency in the worker's zone (rolling 90 days)
-- Predicted weather risk for the upcoming week (7-day forecast)
-- Worker's own claims history and fraud score
-- Current season risk multiplier
-
 ### Premium Calculation Formula
 
 ```
-Weekly Premium = (Base_Rate × Zone_Risk_Factor × Season_Multiplier)
-                 - Claims_Free_Discount
-                 + Surge_Risk_Loading
+Premium = (baseAmount × zoneRiskFactor × seasonMultiplier
+           − claimsFreeDiscount) × tierMultiplier + surgeLoading
+
+where:
+  baseAmount    = weeklyIncome × baseRate
+  maxPayout     = weeklyIncome × coveragePct
 ```
 
 #### Component Breakdown
@@ -227,7 +211,7 @@ Weekly Premium = (Base_Rate × Zone_Risk_Factor × Season_Multiplier)
 | ₹5,501 – ₹8,000 | 0.75% |
 | ₹8,001+ | 0.70% |
 
-**Zone Risk Factor:** ML-derived from 5 years of weather, flood, and civil disruption data per pin code
+**Zone Risk Factor:** Configured per-worker based on city zone historical disruption risk
 
 | Zone Classification | Multiplier |
 |---|---|
@@ -236,38 +220,46 @@ Weekly Premium = (Base_Rate × Zone_Risk_Factor × Season_Multiplier)
 | High risk (coastal, riverine, historically flooded) | 1.30× |
 | Extreme risk (T-18 cyclone zone, flood-prone low-lying) | 1.55× |
 
-**Season Multiplier:**
+**Season Multiplier:** City-specific seasonal loading pulled from `premiumService.js`
 
 | Season | Multiplier | Applies to Cities |
 |---|---|---|
-| Northeast Monsoon (Oct–Dec) | 1.45× | Chennai, Bengaluru |
-| Southwest Monsoon (Jun–Sep) | 1.55× | Mumbai, Bengaluru |
-| Winter smog season (Nov–Feb) | 1.20× | Delhi, NCR |
+| Northeast Monsoon (Oct–Dec) | 1.45× | Chennai, Bengaluru, Coimbatore |
+| Southwest Monsoon (Jun–Sep) | 1.55× | Mumbai, Pune, Kolkata, Hyderabad, Ahmedabad, Surat, Kochi, Nagpur, Indore, Bengaluru |
+| Winter smog season (Nov–Feb) | 1.20× | Delhi, Jaipur, Lucknow, Chandigarh |
 | Dry/summer months | 0.80× | All cities |
 
-**Claims-Free Discount:** Persistent 4-week no-claim window earns -8% off next week's premium. Sustained 8+ weeks no-claim = -15%. Resets on any payout.
+**Claims-Free Discount:** Persistent no-claim window earns discounts. Resets on any payout.
 
-**Surge Risk Loading:** If the 7-day weather forecast shows >70% probability of a trigger-level event, a surge loading of +₹5–₹15 is added. Workers are notified in advance and can opt out (losing coverage for that week only).
+| Claims-Free Weeks | Discount |
+|---|---|
+| 4–7 weeks | −8% |
+| 8+ weeks | −15% |
+
+**Surge Loading:** Computed from `historicalDisruption.js` using IMD historical trigger probability per city per season, amplified by zone risk factor. Range: ₹0–₹20, capped to prevent loading overreach.
+
+**Minimum Premium:** ₹15/week (floor applied regardless of formula output).
 
 ### Real Example: Ravi's Weekly Premium Calculation
 
 ```
 Ravi's verified weekly income:     ₹6,100
 Base Rate (₹5,501–₹8,000 band):   0.75% × ₹6,100 = ₹45.75
-Zone Risk Factor (Anna Nagar,
-  coastal-adjacent, moderate):     1.00× → ₹45.75
+Zone Risk Factor (T. Nagar,
+  moderate):                       1.00× → ₹45.75
 Season Multiplier (November,
   NE Monsoon peak):                1.45× → ₹66.34
-Claims-Free Discount (8 weeks):    -15% → -₹9.95
-Surge Loading (cyclone warning
-  in forecast):                    +₹8.00
+Claims-Free Discount (8 weeks):    −15% → −₹9.95
+Surge Loading (historical
+  trigger probability):            +₹8.00
+Tier Multiplier (Standard):        1.00×
 ────────────────────────────────────────
-FINAL WEEKLY PREMIUM:              ₹64.39 → rounded to ₹65
+FINAL WEEKLY PREMIUM:              ₹65 (rounded)
 ```
 
 Ravi's maximum coverage for that week: 70% of ₹6,100 = **₹4,270 in protected income**.
 
-For ₹65/week, Ravi protects up to ₹4,270 in potential income. That is a **65.7× value ratio on premium spent**, making KAVACH extraordinarily accessible.
+For ₹65/week, Ravi protects up to ₹4,270. That is a **65.7× value ratio on premium spent**, making KAVACH extraordinarily accessible.
 
 ### Coverage Tiers
 
@@ -279,7 +271,7 @@ For ₹65/week, Ravi protects up to ₹4,270 in potential income. That is a **65
 
 ### What the Premium Does NOT Cover
 
-- Health, life, accident, or vehicle repair (strictly excluded per problem statement)
+- Health, life, accident, or vehicle repair (strictly excluded)
 - Self-caused disruptions (worker switches off the app voluntarily)
 - Disruptions not crossing verified parametric thresholds
 - Income lost due to customer cancellations, low ratings, or voluntary breaks
@@ -288,522 +280,740 @@ For ₹65/week, Ravi protects up to ₹4,270 in potential income. That is a **65
 
 ## 5. Parametric Trigger Architecture
 
-KAVACH uses a **Tiered Multi-Source Trigger Validation** system. A payout trigger requires a minimum of 3 independent data sources to confirm the disruption event. Single-source triggers are never auto-approved.
+KAVACH uses a **Tiered Multi-Source Trigger Validation** system. Each trigger category requires confirmation from independent data sources before a claim is raised.
 
-### Trigger Categories & Thresholds
+### Trigger Types, Thresholds & Disruption Windows
 
 #### ENVIRONMENTAL TRIGGERS
 
 | Event | Primary Source | Threshold | Backup Source | Geo-Precision |
 |---|---|---|---|---|
-| Heavy Rainfall | IMD Rainfall API | >35mm / 3 hours | OpenWeatherMap | Pin code level |
+| Heavy Rainfall | IMD Rainfall API | >35mm / 3 hours | OpenWeatherMap | Ward/zone level |
 | Extreme Heat | IMD Temperature API | Heat Index >46°C | Skymet Weather API | City level |
-| Flash Flood | CWC (Central Water Commission) River API | Level alert RED | NDRF alert + Twitter geo | Zone level |
+| Flash Flood | CWC River Level API | RED alert | NDRF alert + Twitter geo | Zone level |
 | Severe AQI | CPCB AQI API | AQI > 400 (Severe) | AirVisual API | Zone level |
-| Cyclone Warning | IMD Cyclone Alert | Yellow/Orange/Red warning | Govt press API | City/district |
 
 #### SOCIAL / CIVIL TRIGGERS
 
 | Event | Primary Source | Threshold | Backup Source | Geo-Precision |
 |---|---|---|---|---|
-| Curfew / Section 144 | State Police Twitter API | Official announcement | PIB press release API | District level |
-| Bandh / Strike | News NLP classifier (trained) | 3+ credible news sources within 1 hour | Union official announcements | City level |
-| Zone Closure | Municipal corporation API | Official closure notice | Google Maps road closure data | Street level |
+| Curfew / Section 144 | State Police API | Official announcement | PIB press release API | District level |
+| Zone Closure | Municipal corporation API | Official closure notice | Google Maps road closure | Street level |
 
-#### PLATFORM TRIGGERS (Novel — not in standard parametric products)
+#### PLATFORM TRIGGERS
 
 | Event | Source | Threshold | Backup |
 |---|---|---|---|
-| Platform Outage | Zomato/Swiggy heartbeat API | API p95 latency >8s for 15 minutes | Downdetector score >500 + Twitter volume |
-| Zone Supply Freeze | Platform Partner API | <5 orders assigned in zone in 30 min | Cross-worker validation (15+ workers idle) |
-| Restaurant Zone Closure | Platform data + Google Places | >60% of zone restaurants marked closed | MCD/GHMC closure notices |
-
-
-This design means:
-- A weather API glitch alone cannot trigger payouts
-- A viral but unverified Twitter rumor alone cannot trigger payouts
-- Even confirmed rain in another city part of Chennai does not trigger Ravi's policy if his zone is unaffected
+| Platform Outage | Zomato/Swiggy heartbeat API | p95 latency >8s for 15 min | Downdetector score >500 + Twitter volume |
+| Zone Supply Freeze | Platform Partner API | <5 orders in zone in 30 min | Cross-worker validation (multiple workers idle) |
 
 ### Trigger Escalation Levels
 
-| Level | Severity | Payout % Multiplier | Threshold |
+| Level | Severity | Payout Multiplier | Rain Example |
 |---|---|---|---|
-| Level 1 — Minor | Threshold barely crossed | 0.6× | 35–50mm rain in 3hr |
-| Level 2 — Moderate | Clearly significant | 0.85× | 50–75mm rain in 3hr |
-| Level 3 — Major | Severe disruption | 1.0× | 75–100mm rain in 3hr |
-| Level 4 — Catastrophic | Force majeure event | 1.0× (capped at policy max) | >100mm / cyclone / curfew |
+| Level 1 — Minor | Threshold barely crossed | 0.60× | 35–50mm/3hr |
+| Level 2 — Moderate | Clearly significant | 0.85× | 50–75mm/3hr |
+| Level 3 — Major | Severe disruption | 1.00× | 75–100mm/3hr |
+| Level 4 — Catastrophic | Force majeure | 1.00× (capped at policy max) | >100mm / cyclone / curfew |
 
-Levels 1 and 2 are **partial payouts** — reflecting that workers may still manage some deliveries despite a moderate disruption. This is actuarially more honest and prevents "light rain = full payout" abuse.
+### Default Disruption Window Lengths (minutes)
 
----
+| Trigger Type | Level 1 | Level 2 | Level 3 | Level 4 |
+|---|---|---|---|---|
+| Rain | 60 | 120 | 180 | 240 |
+| AQI | 240 | 360 | 480 | 720 |
+| Flood | 360 | 480 | 720 | 1440 |
+| Curfew | 240 | 480 | 720 | 1440 |
+| Platform Outage | 45 | 90 | 180 | 360 |
+| Zone Freeze | 60 | 120 | 180 | 360 |
+| Heat | 180 | 240 | 360 | 480 |
 
-## 6. AI/ML Integration Plan
+The trigger monitor runs **every 30 minutes** via `node-cron`, checking all active workers and their city/zone conditions. Only workers whose shift window overlaps with the disruption window are eligible for a claim.
 
-### Component 1: Digital Income Twin (DIT) — Earning Prediction Model
+### Supported Cities & Zones
 
-**Algorithm:** Gradient Boosted Trees (XGBoost) per worker
+KAVACH currently supports **16 cities** across India with **10 delivery zones each**:
 
-**Features:**
-- Hour of day (24 categorical + cyclical encoding)
-- Day of week (7 categorical)
-- Week of month (1–5)
-- Month (seasonal encoding)
-- Zone order density (from platform API, real-time)
-- Platform (Zomato / Swiggy / combined)
-- Worker tenure (months on platform)
-- Worker rating tier (Gold / Silver / Bronze)
-- Local event flags (IPL, elections, festivals — from Google Calendar API + custom event DB)
-- Historical 7-day moving average earnings
+| City | Example Zones |
+|---|---|
+| Chennai | Anna Nagar, T. Nagar, Adyar, Marina, Tambaram, Velachery, Sholinganallur, Porur, Ambattur, Perungudi |
+| Mumbai | Bandra, Andheri, Dharavi, Kurla, Dadar, Borivali, Worli, Colaba, Powai, Vikhroli |
+| Delhi | Connaught Place, Lajpat Nagar, Dwarka, Rohini, Saket, Noida Sec 62, Karol Bagh, Janakpuri, Pitampura, Vasant Kunj |
+| Bengaluru | Koramangala, Indiranagar, Whitefield, HSR Layout, Electronic City, MG Road, Jayanagar, Marathahalli, Hebbal, Yelahanka |
+| Hyderabad | Gachibowli, HITEC City, Banjara Hills, Jubilee Hills, Uppal, Secunderabad, Kukatpally, Madhapur, Ameerpet, LB Nagar |
+| + 11 more | Pune, Kolkata, Ahmedabad, Jaipur, Lucknow, Surat, Kochi, Chandigarh, Indore, Nagpur, Coimbatore |
 
-**Training:** On each worker's own platform earnings data (with consent). Cold-start: city-zone cohort median until 4 weeks of personal data available.
-
-**Output:** Predicted earnings in INR for any given time window (down to 30-minute intervals)
-
-**Retraining frequency:** Weekly incremental retraining with latest 7 days of data
-
----
-
-### Component 2: Zone Risk Scoring Model
-
-**Algorithm:** Random Forest on geospatial + historical disruption data
-
-**Features:**
-- Historical rainfall events per pin code (5 years, IMD data)
-- Historical flood events (CWC data)
-- Elevation data (SRTM 30m resolution)
-- Distance to coast / river
-- Urban drainage quality score (municipal data)
-- Historical civil disruption frequency
-- Population density
-
-**Output:** Zone risk score (0.5–2.0) used directly in premium calculation
-
-**Updates:** Quarterly model re-run with latest climate and municipal data
+Each zone has precise lat/lon coordinates for hyper-local weather and AQI API queries, falling back to city-level coordinates when zone data is unavailable.
 
 ---
 
-### Component 3: Dynamic Weekly Premium Engine
+## 6. AI/ML Integration — Actual Implementation
 
-**Algorithm:** Rule-based engine backed by ML-derived coefficients
+### The Digital Income Twin (DIT) — Stacked Ensemble Model
 
-**Inputs:** DIT-verified income, zone risk score, season model, claims history, 7-day weather forecast risk score
+The DIT answers one question: *"How much would this worker have earned during that time slot, if the disruption had never happened?"*
 
-**Output:** Weekly premium in INR, per tier
+**Architecture:**
 
----
+```
+Input (47 features)
+        │
+        ├──────────────────────┐
+        ▼                      ▼
+   XGBoost                LightGBM
+   (900 trees,            (900 trees,
+    depth 7)               depth 7)
+        │                      │
+        └──────────┬───────────┘
+                   ▼
+          Ridge meta-learner
+          (optimal blend learned
+           on out-of-fold predictions)
+                   │
+                   ▼
+          predicted_earnings (INR)
+```
 
-### Component 4: Fraud Anomaly Detection Model
+**Training Data:** 60,000 synthetic samples generated from real-world delivery dynamics, calibrated against:
+- Kaggle `food-delivery-dataset` (45,000+ real Indian food delivery records) for delivery-time distributions
+- IDInsight 2024 Indian gig worker study (₹75–₹170/hr real earnings range)
+- Real Zomato/Swiggy peak-hour demand curves (lunch peak 1.48–1.50×, dinner peak 1.62–1.65×)
 
-**Algorithm:** Isolation Forest + LSTM-based sequence anomaly detector
+**Performance (5-fold out-of-fold cross-validation):**
 
-**See Section 7 for full detail.**
+| Metric | Value |
+|---|---|
+| R² | 0.9874 |
+| MAE | ₹16.79 |
+| RMSE | ₹27.18 |
+| Mean predicted hourly earnings | ₹85.8/hr (within IDInsight real range) |
 
----
+**Confidence Score:** Each prediction returns `confidence = 1 − (residual_std / predicted_earnings)` clipped to [0.50, 0.99]. Predictions above 0.85 confidence are considered high-quality.
 
-### Component 5: Computer Vision — Receipt/Photo Validation 
+### How Earnings Are Derived
 
-When fraud risk score is ELEVATED, KAVACH can optionally request a geotagged photo or a dashboard screenshot from the worker as secondary confirmation. A lightweight CV model validates:
-- GPS metadata matches claimed zone
-- Timestamp matches disruption window
-- Photo content is consistent (rain/flooded road visible, or delivery bag visible but worker stationary)
+The core insight: delivery time is the key link.
+
+```
+orders_per_hour    = 60 / (delivery_time_minutes + pickup_wait + return_buffer)
+earnings_per_order = city_base_payout
+                   × hour_demand_multiplier   (0.14× at 3am → 1.65× at 8pm)
+                   × weather_multiplier       (1.00× Sunny → 1.25× Stormy)
+                   × traffic_multiplier       (1.00× Low → 1.20× Jam)
+                   × festival_multiplier      (1.30× on festival days)
+                   × rating_multiplier        (0.80× poor → 1.20× excellent)
+                   × income_multiplier        (proxy for worker experience)
+                   × zone_multiplier          (0.88× outer → 1.40× premium)
+hourly_earnings    = earnings_per_order × orders_per_hour
+predicted_earnings = hourly_earnings × window_hours
+```
+
+### 47 Features Across 6 Groups
+
+**Group 1: Income** — `weekly_income`, `income_log`, `hourly_base`
+
+**Group 2: Time** — `start_hour`, `window_hours`, `is_weekend`, `day_of_week`, `hour_sin/cos`, `dow_sin/cos`, `hour_demand`, `is_peak_lunch`, `is_peak_dinner`, `is_peak_morning`, `is_night`
+
+**Group 3: Delivery Signals (Kaggle schema)** — `time_taken_min`, `orders_per_hour`, `delivery_rating`, `multiple_deliveries`, `person_age`, `weather_enc`, `traffic_enc`, `weather_severity`, `traffic_severity`, `is_festival`
+
+**Group 4: Platform** — `platform_enc`, `is_zomato`, `is_swiggy`, `vehicle_enc`, `order_enc`
+
+**Group 5: Location** — `city_enc`, `city_base_payout`, `zone_multiplier`
+
+**Group 6: Interaction** — `time_x_traffic`, `time_x_weather`, `orders_x_demand`, `income_x_orders`, `income_x_demand`, `income_x_city`, `income_x_zone`, `demand_x_window`, `orders_x_window`, `rating_x_income`, `multi_x_earnings`, `festival_x_demand`, `expected_base`
+
+### Trigger → ML Context Mapping
+
+The `ditService.js` automatically maps trigger type to weather and traffic conditions for the ML request:
+
+| Trigger Type | Weather Sent to ML | Traffic Sent to ML |
+|---|---|---|
+| rain | Stormy | High |
+| flood | Stormy | Jam |
+| aqi | Fog | High |
+| curfew | Sunny | Jam |
+| platform_outage | Cloudy | Medium |
+| zone_freeze | Cloudy | Jam |
+| heat | Sunny | Medium |
+
+### Rule-Based Fallback
+
+If the ML service is unreachable (ECONNREFUSED or timeout after 8 seconds), `ditService.js` automatically falls back to a rule-based prediction:
+
+```
+income      = verifiedWeeklyIncome || declaredWeeklyIncome || 5000
+hourlyBase  = (income / 6) / 10
+prediction  = hourlyBase × hours × dayMultiplier × peakHourMultiplier
+```
+
+The `predictionSource` field in the audit log records `"ml"` or `"rule_based"` for transparency.
+
+### ML Service API
+
+The FastAPI service runs on `http://localhost:5001` (Python).
+
+**`GET /health`** — Returns model metadata, OOF metrics, and uptime.
+
+**`POST /predict`** — Single worker prediction. Required fields:
+
+```json
+{
+  "worker_id": "abc123",
+  "weekly_income": 6000,
+  "city": "Urban",
+  "zone": "adyar",
+  "window_start": "2026-04-02T19:00:00.000Z",
+  "window_end":   "2026-04-02T21:00:00.000Z",
+  "platforms": ["zomato"],
+  "weather_condition":    "Stormy",
+  "road_traffic_density": "High",
+  "delivery_rating":      4.2,
+  "multiple_deliveries":  1,
+  "vehicle_type":         "motorcycle",
+  "delivery_person_age":  28,
+  "is_festival":          false
+}
+```
+
+**City mapping for ML (`ditService.js`):**
+
+| Worker City | Sent to ML as |
+|---|---|
+| mumbai, delhi, bengaluru, kolkata | `Metropolitian` |
+| chennai, hyderabad, pune, ahmedabad, surat, lucknow, kochi, coimbatore, indore, nagpur | `Urban` |
+| chandigarh, jaipur | `Semi-Urban` |
+
+**`POST /predict/batch`** — Up to 100 workers in one call:
+
+```json
+{ "requests": [ { ...request_1 }, { ...request_2 } ] }
+```
 
 ---
 
 ## 7. Fraud Detection Architecture
 
-Fraud is the single greatest risk to parametric insurance viability. KAVACH's fraud system has **7 independent layers** — a fraudster must defeat all 7 simultaneously for a false claim to succeed.
+Fraud is the single greatest risk to parametric insurance viability. KAVACH's fraud system has **7 independent layers** plus a Physical Presence Confidence Score (PPCS).
 
-### Layer 1: Zone-Event Correlation
+### Layer 1: GPS Zone Validation
 
-**Question:** Was the worker genuinely in the disruption zone?
-
-- GPS location at trigger time cross-checked against disruption zone polygon
-- Worker must be within zone for >20 minutes in the 30-minute pre-trigger window
-- Spoofing detection: GPS reading frequency and coordinate jitter analyzed (real GPS has minor natural jitter; spoofed GPS is suspiciously smooth or teleports)
+Verifies that the worker has a confirmed city + zone on record. Workers without a verified zone receive a score penalty of +20 and a `ZONE_NOT_VERIFIED` flag.
 
 ### Layer 2: Platform Activity Cross-Validation
 
-**Question:** Did the platform data actually show no deliveries?
+Compares `actualEarned` against `predictedLoss`. If the worker actually earned more than 50% of the predicted loss during the disruption window, the claim is flagged `EARNING_DURING_DISRUPTION` (+25 score).
 
-- API call to Zomato/Swiggy Partner endpoint: number of orders completed in trigger window
-- If worker completed >2 orders during a supposed full-disruption period → claim rejected
-- If platform shows worker was "offline" (app closed) before disruption started → suspicious flag (worker may have preemptively gone offline to claim)
+### Layer 3: New Account Cooling-Off
 
-### Layer 3: Community Consensus Validation
-
-**Question:** Is this worker the only one claiming, or did the whole zone stop?
-
-- In genuine disruptions, **15+ workers in the same zone** show identical idle patterns
-- If fewer than 3 workers in a zone are showing zero activity → anomaly flag
-- If a single worker is claiming but 20 nearby workers are still active → high fraud risk score, escalates to manual review
-
-This layer alone eliminates virtually all individual false claim attempts, because a real disruption affects everyone, not just one person.
+| Account Age | Score Penalty | Flag |
+|---|---|---|
+| < 7 days | +30 | `NEW_ACCOUNT_WEEK_1` |
+| 7–14 days | +15 | `NEW_ACCOUNT_WEEK_2` |
 
 ### Layer 4: Historical Behavioral Baseline
 
-**Question:** Does this worker's claim pattern look normal?
+Checks claim frequency over the rolling 28-day window:
 
-- Each worker has a **behavioral fingerprint**: frequency of claims, timing of claims, zones of claims
-- New users with no history who immediately claim on week 1: elevated scrutiny
-- Workers with sudden changes in zone just before a disruption event: flagged (zone-switching to enter a disruption zone)
-- Workers whose claim rate significantly exceeds their zone cohort: escalated
+| Recent Approved Claims (4 weeks) | Score Penalty | Flag |
+|---|---|---|
+| ≥ 4 claims | +20 | `HIGH_CLAIM_FREQUENCY` |
+| 3 claims | +10 | `ELEVATED_CLAIM_FREQUENCY` |
+
+### Layer 4.5: Per-Worker Velocity Anomaly
+
+Compares the claim's implied hourly earnings rate against the worker's own 4-week rolling average (`avgEarningsPerHour`, updated weekly by cron):
+
+| Velocity Ratio (claim rate / baseline) | Score Penalty | Flag |
+|---|---|---|
+| > 2.5× | +20 | `VELOCITY_ANOMALY_SEVERE` |
+| 2.0–2.5× | +15 | `VELOCITY_ANOMALY` |
+| 1.7–2.0× | +5 | `VELOCITY_ELEVATED` |
+
+Workers with fewer than 3 historical claims (cold start) skip this layer.
 
 ### Layer 5: Duplicate Claim Prevention
 
-- Each policy covers one loss event per trigger window
-- A single disruption event cannot generate multiple claims from the same worker
-- Cross-platform check: worker claiming on KAVACH for Zomato outage but platform shows Swiggy income earned = deducted from payout
-- Multi-account detection: Aadhaar + phone linkage ensures one identity = one policy
+Checks for any non-rejected claim for the same worker, policy, trigger type, and disruption window within the past 6 hours. Duplicate detected = +50 (`DUPLICATE_CLAIM`).
 
-### Layer 6: Earnings Continuity Audit
+### Layer 6: Last-Minute Policy Purchase
 
-**Question:** Did the worker's actual earnings suddenly resume the moment the payout was processed?
+If the policy was created less than 24 hours ago, the claim is flagged `POLICY_SEASONING_PERIOD` (+25 score).
 
-- Platform data monitored post-payout
-- Pattern: worker claims full disruption → receives payout → immediately completes 8 orders within 30 minutes of payout = suspicious "waiting it out" behavior
-- This pattern scored and used in long-term fraud modeling
+### Layer 7: UPI Payout Destination Clustering (Ring Detection)
 
-### Layer 7: Real-Time Fraud Score (Isolation Forest)
+Detects coordinated fraud rings by checking how many workers from the same bank (same UPI handle suffix) and same city submitted claims in the past 1 hour. If the count exceeds 20 → `UPI_CLUSTER_RING_DETECTED` (+30 score).
 
-All the above signals are aggregated in real-time into a fraud score (0–100).
+### Physical Presence Confidence Score (PPCS)
 
-| Score Range | Action |
-|---|---|
-| 0–30 | Auto-approve payout |
-| 31–60 | Approve with audit flag for post-payout review |
-| 61–80 | Hold payout, request secondary confirmation from worker (geotagged photo, or WhatsApp confirmation) |
-| 81–100 | Reject claim, escalate to manual review team + notify worker of reason |
+Calculated from device signals sent by the mobile app SDK:
+
+| Signal | Genuine Worker | Spoofer | Penalty |
+|---|---|---|---|
+| GPS jitter < 0.05 (unnaturally smooth) | Natural micro-drift | Suspiciously smooth | −30 pts |
+| Motion continuity absent | Continuous trajectory | No prior motion trail | −25 pts |
+| Cell tower doesn't match zone | Zone tower | Home tower | −25 pts |
+| Platform app heartbeat absent | App actively polling | App not polling | −20 pts |
+
+PPCS starts at 100 and is deducted based on signals. Range: 0–100.
+
+### Payout Decision Matrix
+
+| Fraud Score | PPCS | Decision | Action |
+|---|---|---|---|
+| ≤ 30 | ≥ 80 | **Auto-Approve** | Payout within minutes |
+| ≤ 60 | ≥ 50 | **Soft Flag** | Approved, held 2 hours for reconciliation |
+| ≤ 80 | Any | **Verify** | Worker asked to send geotagged photo via WhatsApp |
+| > 80 | Any | **Manual Review** | Up to 24 hours, worker notified |
 
 ### Key Anti-Abuse Rules
 
-1. **No retroactive claims:** Worker must be an active policy holder BEFORE the disruption event. Last-minute policy purchases minutes before a known cyclone are rejected (window: policy must have been active for at least 24 hours).
-2. **Geographic consistency:** Worker cannot suddenly change their registered zone the day before a localized flood.
-3. **Platform linkage required:** Unlinked platform ID = no automated claim. Manual-only with additional KYC.
-4. **Cooling-off period for new accounts:** Week 1 policies: claims require human review regardless of fraud score.
+1. **No retroactive claims:** Policy must have been active for at least 24 hours before the disruption event.
+2. **Shift window overlap check:** Only loss within the worker's registered shift hours counts toward payout calculation.
+3. **Cross-platform net income:** Multi-platform workers have all platform earnings aggregated — no double-dipping.
+4. **IST-aware window calculation:** All shift and disruption windows are computed correctly in IST (UTC+5:30) to prevent timezone gaming.
 
 ---
 
 ## 8. Platform Choice: Progressive Web App (PWA)
 
-**Decision: Progressive Web App (PWA)**
+**Decision: Progressive Web App (PWA) built in React**
 
 ### Justification
 
-Gig delivery workers in India are mobile-first but operate across a wide range of entry-level Android devices (₹6,000–₹15,000 range) with limited storage and constrained data plans. A PWA gives us the reach of a website with the feel of a native app — no Play Store friction, instant updates, and a 2MB install footprint versus an 80MB native app.
+Gig delivery workers in India are mobile-first but operate across a wide range of entry-level Android devices (₹6,000–₹15,000 range) with limited storage and constrained data plans. A PWA gives us the reach of a website with the feel of a native app — no Play Store friction, instant updates, and a minimal install footprint.
 
-A single PWA codebase also serves both the worker-facing app and the insurer admin dashboard, significantly reducing development overhead across the 6-week hackathon timeline.
+A single React codebase serves both the worker-facing app and the insurer admin dashboard, significantly reducing development overhead.
 
 **Key UX Principles:**
-- Primary language: English + Hindi + Tamil + Telugu + Kannada (i18n from Day 1)
-- Zero-tap claim flow — payouts trigger automatically; worker only sees a notification
+- Languages: English, Hindi, Tamil (via React Context i18n — `translations.js` with 2,000+ translation keys)
 - WhatsApp as the primary notification channel — more reliable than push notifications on budget Android devices
-- Dashboard loads in under 2 seconds on a 3G/4G connection via Service Worker caching
-- Offline mode: policy status and last payout visible even without connectivity
+- Zero-tap claim flow — payouts trigger automatically via cron; worker only sees a notification
+- Global AI chatbot widget (Claude API-powered, README-informed) available on all pages
+
+### Frontend Pages
+
+| Route | Component | Access |
+|---|---|---|
+| `/` | `Onboarding.jsx` | Public (worker login/register or admin login) |
+| `/dashboard` | `Dashboard.jsx` | Worker (authenticated) |
+| `/policy` | `PolicyPage.jsx` | Worker (authenticated) |
+| `/claims` | `ClaimsPage.jsx` | Worker (authenticated) |
+| `/admin` | `AdminDashboard.jsx` | Admin only |
 
 ---
 
 ## 9. Tech Stack & Architecture
 
-### System Architecture Overview
-```
+### Actual System Architecture
 
-┌─────────────────────────────────────────────────────────────────┐
-│                        KAVACH PLATFORM                          │
-│                                                                 │
-│   ┌─────────────────┐              ┌──────────────────────┐     │
-│   │   Worker PWA    │              │   Admin Dashboard    │     │
-│   │  (React.js)     │              │  (Insurer Analytics) │     │
-│   └────────┬────────┘              └──────────┬───────────┘     │
-│            │                                  │                 │
-│   ┌────────▼──────────────────────────────────▼───────────┐     │
-│   │              API Gateway (Node.js / Express)          │     │
-│   │           Auth · Routing · Rate Limiting              │     │
-│   └──────┬──────────────┬──────────────┬──────────────────┘     │
-│          │              │              │                        │
-│   ┌──────▼──────┐ ┌─────▼──────┐ ┌────▼──────────┐              │
-│   │   Policy    │ │   Claims   │ │  ML Services  │              │
-│   │   Service   │ │   Engine   │ │  (FastAPI)    │              │
-│   │             │ │            │ │               │              │
-│   │ Weekly DIT  │ │  Trigger   │ │ - DIT Model   │              │
-│   │ premium     │ │  eval +    │ │ - Fraud Model │              │
-│   │ calc +      │ │  payout    │ │ - Zone Risk   │              │
-│   │ activation  │ │  orch.     │ │ - NLP Engine  │              │
-│   └──────┬──────┘ └─────┬──────┘ └───────────────┘              │
-│          │              │                                       │
-│          │       ┌──────▼───────────────┐                       │
-│          │       │  Trigger Orchestrator│                       │
-│          │       │  (Redis Queue)       │                       │
-│          │       │  3-source validation │                       │
-│          │       └──────────────────────┘                       │
-│          │                    │                                 │
-│   ┌──────▼────────────────────▼───────────────────────────┐     │
-│   │                  PostgreSQL + PostGIS                 │     │
-│   │       Workers · Policies · Claims · Audit Logs        │     │
-│   └───────────────────────────────────────────────────────┘     │
-│                                                                 │
-│   ┌──────────────────────────────────────────────────────┐      │
-│   │  Notifications Service                               │      │
-│   │  WhatsApp Business API · SMS                         │      │
-│   └──────────────────────────────────────────────────────┘      │
-└─────────────────────────────────────────────────────────────────┘
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        KAVACH PLATFORM                           │
+│                                                                  │
+│   ┌─────────────────┐              ┌──────────────────────┐      │
+│   │   Worker PWA    │              │   Admin Dashboard    │      │
+│   │  (React 18)     │              │  (React 18)          │      │
+│   └────────┬────────┘              └──────────┬───────────┘      │
+│            │                                  │                  │
+│   ┌────────▼──────────────────────────────────▼────────────┐     │
+│   │         Node.js / Express API (port 5000)              │     │
+│   │      Auth · Routing · JWT · CORS · Morgan              │     │
+│   └──────┬──────────┬──────────┬──────────┬───────────────┘     │
+│          │          │          │          │                      │
+│   ┌──────▼──┐  ┌────▼────┐ ┌──▼──────┐ ┌─▼──────────┐          │
+│   │ /auth   │  │/policies│ │/claims  │ │/triggers   │          │
+│   │ /workers│  │         │ │         │ │/admin      │          │
+│   │ /chat   │  │ Premium │ │ Fraud   │ │/webhooks   │          │
+│   │         │  │ Engine  │ │ Engine  │ │            │          │
+│   └─────────┘  └────┬────┘ └──┬──────┘ └────────────┘          │
+│                     │         │                                  │
+│               ┌─────▼─────────▼─────────┐                       │
+│               │      MongoDB (Mongoose)  │                       │
+│               │  Workers · Policies ·   │                       │
+│               │  Claims · AuditLogs     │                       │
+│               └─────────────────────────┘                       │
+│                                                                  │
+│   ┌───────────────────────────────────────────────────────┐      │
+│   │              ML Service — FastAPI (port 5001)         │      │
+│   │   POST /predict · POST /predict/batch · GET /health   │      │
+│   │   XGBoost + LightGBM + Ridge stacked ensemble         │      │
+│   │   Artifacts: xgb_model.pkl, lgb_model.pkl,            │      │
+│   │              meta_model.pkl, meta.json                 │      │
+│   └───────────────────────────────────────────────────────┘      │
+│                                                                  │
+│   ┌───────────────────────────────────────────────────────┐      │
+│   │        Scheduled Jobs (node-cron, IST timezone)       │      │
+│   │  Mon 00:01 — Weekly policy renewal + claims-free inc  │      │
+│   │  Every 30m — Trigger monitor for all active workers   │      │
+│   │  Mon 01:00 — Worker behavioral baseline update        │      │
+│   │  Daily 00:00 — Stale claim escalation to manual review│      │
+│   └───────────────────────────────────────────────────────┘      │
+└──────────────────────────────────────────────────────────────────┘
 
 EXTERNAL INTEGRATIONS
-──────────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────────
  Weather / Environment
-   IMD Rainfall API          ──►  Trigger Orchestrator
-   OpenWeatherMap API         ──►  Trigger Orchestrator
-   CPCB AQI API              ──►  Trigger Orchestrator
-   CWC Flood Level API        ──►  Trigger Orchestrator
-
- Social / Civil
-   Twitter/X Streaming API   ──►  NLP Engine  ──►  Trigger Orchestrator
-   State Police / PIB API    ──►  NLP Engine  ──►  Trigger Orchestrator
+   OpenWeatherMap API        ──►  triggerService.js (rain, heat)
+   CPCB AQI API              ──►  triggerService.js (AQI)
+   CWC Flood Level API        ──►  triggerService.js (flood)
+   IMD (reference)            ──►  historicalDisruption.js
 
  Platform
-   Zomato Partner API        ──►  Claims Engine + DIT Training
-   Swiggy Partner API        ──►  Claims Engine + DIT Training
+   Zomato/Swiggy heartbeat   ──►  triggerService.js (platform_outage, zone_freeze)
 
- Payments & Identity
-   Razorpay API              ──►  Policy Service (AutoPay) + Claims Engine (Payout)
-   Aadhaar / DigiLocker API  ──►  KYC Service
+ Payments
+   Razorpay API               ──►  paymentService.js (UPI AutoPay + UPI/IMPS Payout)
+   Razorpay Webhooks          ──►  webhooks.js (payment confirmation)
 
-FRAUD ENGINE (7 Layers — runs inside Claims Engine)
-──────────────────────────────────────────────────────────────────
-   Layer 1 · GPS Zone Validation
-   Layer 2 · Platform Activity Cross-Check
-   Layer 3 · Community Consensus (15+ workers in zone)
-   Layer 4 · Historical Behavioral Baseline
-   Layer 5 · Duplicate Claim Prevention
-   Layer 6 · Earnings Continuity Audit
-   Layer 7 · Isolation Forest Real-Time Score (0–100)
+ Notifications
+   WhatsApp Business API      ──►  notificationService.js (claim + policy events)
+
+ Blockchain
+   Sepolia ETH Testnet        ──►  blockchainService.js (payout receipt hashing)
+   Ethers.js                  ──►  0-value self-transfer with JSON payload in data field
 ```
 
 ### Technology Choices
 
 | Layer | Technology | Justification |
 |---|---|---|
-| Frontend | React.js (PWA) | Single codebase for worker app + insurer dashboard; 2MB footprint works on entry-level Android devices and 3G connections |
-| API Layer | Node.js + Express | Fast async I/O for real-time trigger handling |
-| ML Services | Python + FastAPI | Data science ecosystem (pandas, scikit-learn, XGBoost) |
-| Database | PostgreSQL | ACID compliance, geospatial support (PostGIS) |
-| Cache / Queue | Redis | Real-time trigger queue, session cache, rate limiting |
-| Scheduler | Apache Airflow | Weekly premium calculation, DIT retraining pipelines |
-| ML Ops | MLflow | Model versioning, experiment tracking, DIT model registry |
-| Infrastructure | AWS | EC2/ECS for services, RDS for PostgreSQL, S3 for model artifacts |
-| Messaging | WhatsApp Business API | Primary notification channel — used by virtually all Indian gig workers |
-| Payments | Razorpay | UPI AutoPay for premiums, UPI Payout API for claims — India-native |
-| KYC | Aadhaar API (Sandbox) | India's national identity system — mandatory for 1-person-1-policy enforcement |
-| Geospatial | PostGIS + Turf.js | Zone polygon intersection checks for hyper-local trigger validation |
-| Monitoring | Grafana + Prometheus | Real-time system monitoring |
+| Frontend | React 18 (PWA) | Single codebase for worker app + insurer dashboard |
+| API Layer | Node.js + Express 4 | Fast async I/O; JWT auth; `morgan` logging |
+| ML Service | Python + FastAPI + Uvicorn | XGBoost, LightGBM, scikit-learn ecosystem |
+| Database | MongoDB (Mongoose 8) | Flexible schema; 2dsphere index for geo queries |
+| Scheduler | node-cron | Embedded cron; 4 jobs; IST timezone support |
+| Blockchain | Ethers.js + Sepolia ETH | Immutable payout audit trail; zero gas cost (testnet) |
+| Payments | Razorpay | UPI AutoPay (premiums) + UPI/IMPS Payout API (claims) |
+| Messaging | WhatsApp Business API (Meta Graph v18) | Primary channel for Indian gig workers |
+| Chatbot | Claude API (claude-sonnet-4-20250514) | README-informed answers; multi-turn history |
+| Charts | Recharts | Admin dashboard analytics visualization |
+| Localization | React Context (translations.js) | English, Hindi, Tamil; 2,000+ keys |
 
 ---
 
-## 10. 6-Week Development Plan
+## 10. Setup & Running the Platform
 
-### Phase 1: Weeks 1–2 — Ideation & Foundation (Current Phase)
+### Prerequisites
 
-**Team Focus:**
-- Architecture design and finalization
-- API research and mock data setup
-- Database schema design
-- Figma wireframes for all 4 core screens (onboarding, dashboard, policy, claims)
+- Node.js 18+
+- Python 3.10–3.13
+- MongoDB (local or Atlas)
+- A `.env` file in `backend/`
+
+### Backend Setup
+
+```bash
+cd backend
+npm install
+
+# Copy and fill in your environment variables
+cp .env.example .env
+```
+
+**`backend/.env` variables:**
+
+```env
+# Database
+MONGODB_URI=mongodb://localhost:27017/kavach
+
+# Auth
+JWT_SECRET=your_jwt_secret_here
+JWT_EXPIRES_IN=7d
+
+# WhatsApp Business API (Meta Graph)
+WHATSAPP_TOKEN=your_whatsapp_token
+WHATSAPP_PHONE_ID=your_phone_id
+
+# Razorpay
+RAZORPAY_KEY_ID=rzp_test_...
+RAZORPAY_KEY_SECRET=...
+RAZORPAY_ACCOUNT_NUMBER=...
+
+# ML Service
+ML_SERVICE_URL=http://localhost:5001
+ML_TIMEOUT_MS=8000
+
+# Blockchain (Sepolia ETH)
+POLYGON_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
+POLYGON_PRIVATE_KEY=your_sepolia_private_key
+
+# External APIs
+OPENWEATHERMAP_API_KEY=...
+AQI_API_KEY=...
+
+# Admin credentials
+ADMIN_PHONE=9999900000
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=Kavach@Admin2026
+
+# Development mode (set to false for real Razorpay + WhatsApp calls)
+ENABLE_MOCK=true
+NODE_ENV=development
+CLIENT_URL=http://localhost:3000
+```
+
+```bash
+# Seed sample workers (optional)
+node scripts/seedWorkers.js
+
+# Start backend
+npm run dev         # development (nodemon)
+npm start           # production
+```
+
+The backend starts on `http://localhost:5000`. On startup it:
+1. Connects to MongoDB
+2. Checks ML service health (warns and falls back if unreachable)
+3. Starts all 4 cron jobs
+
+### ML Service Setup
+
+```bash
+cd ml
+
+# Install dependencies (Python 3.10–3.13)
+pip install -r requirements.txt
+
+# Generate 60,000 training samples
+python generate_data.py
+
+# Train the stacked ensemble (~3 minutes)
+# Saves xgb_model.pkl, lgb_model.pkl, meta_model.pkl, meta.json to artifacts/
+python train.py
+
+# Start the FastAPI service
+python main.py
+# → http://localhost:5001
+```
+
+Pre-trained artifacts are included in `ml/artifacts/` so you can skip training and go straight to `python main.py`.
+
+### Frontend Setup
+
+```bash
+cd frontend
+npm install
+
+# Start dev server (proxies API calls to localhost:5000)
+npm start
+# → http://localhost:3000
+
+# Production build
+npm run build
+```
+
+### Quick Start (All Three Services)
+
+```bash
+# Terminal 1 — Backend
+cd backend && npm run dev
+
+# Terminal 2 — ML Service
+cd ml && python main.py
+
+# Terminal 3 — Frontend
+cd frontend && npm start
+```
 
 ---
 
-### Phase 2: Weeks 3–4 — Automation & Protection
+## 11. API Reference
 
-**Deliverables:**
-- Worker registration + KYC flow (functional)
-- Platform ID linkage (Zomato/Swiggy — mock API simulation)
-- Policy creation with dynamic weekly premium calculator
-- DIT model: basic version running on synthetic data
-- 5 automated trigger monitors (rain, AQI, curfew, platform outage, zone freeze)
-- Claims management: auto-trigger → auto-approve flow (end-to-end, with mocked payout)
-- Basic fraud engine: layers 1–3 implemented
+All API routes are prefixed with `/api`. Worker routes require `Authorization: Bearer <token>` (JWT). Admin routes require an admin JWT.
 
-**Key Milestones:**
-- End-to-end automated claim flow works for at least 2 trigger types
-- Weekly premium recalculates on schedule
-- Worker dashboard shows policy status, coverage amount, claim history
+### Authentication — `/api/auth`
+
+| Method | Route | Description |
+|---|---|---|
+| POST | `/send-otp` | Send OTP to worker phone |
+| POST | `/verify-otp` | Verify OTP, returns JWT |
+| POST | `/register` | Register new worker (name, city, zone, platforms, income, UPI, shift) |
+| POST | `/admin/login` | Admin login with username + password, returns admin JWT |
+
+### Workers — `/api/workers`
+
+| Method | Route | Description |
+|---|---|---|
+| GET | `/` | Get current worker profile |
+| PATCH | `/` | Update worker profile |
+
+### Policies — `/api/policies`
+
+| Method | Route | Description |
+|---|---|---|
+| GET | `/active` | Get this week's active policy |
+| POST | `/` | Create / renew policy for worker |
+| GET | `/history` | Past policies |
+
+### Claims — `/api/claims`
+
+| Method | Route | Description |
+|---|---|---|
+| GET | `/` | Worker's claim history |
+| POST | `/auto-process` | Trigger-based auto claim (body: `triggerType`, `triggerLevel`, `triggerSources`, `disruptionStart`, `disruptionEnd`, `actualEarned`) |
+| POST | `/manual` | Manual claim submission |
+
+### Triggers — `/api/triggers`
+
+| Method | Route | Description |
+|---|---|---|
+| GET | `/status` | Check all trigger conditions for worker's city/zone |
+| POST | `/simulate` | Simulate a disruption for demo (body: `triggerType`, `level`) |
+
+### Admin — `/api/admin`
+
+| Method | Route | Description |
+|---|---|---|
+| GET | `/stats` | Platform stats: workers, policies, claims, BCR, fraud distribution |
+| GET | `/workers` | All workers with filters |
+| GET | `/claims` | All claims with filters |
+| GET | `/audit-logs` | Audit trail |
+| POST | `/claims/:id/approve` | Manually approve a claim + trigger payout |
+| POST | `/claims/:id/reject` | Manually reject a claim |
+| POST | `/stress-test` | Simulate mass disruption event across portfolio |
+
+### Webhooks — `/api/webhooks`
+
+| Method | Route | Description |
+|---|---|---|
+| POST | `/razorpay` | Razorpay payment event handler (payment.captured, payout.processed, subscription events) |
+
+### Chat — `/api/chat`
+
+| Method | Route | Description |
+|---|---|---|
+| POST | `/` | Send message to KAVACH AI chatbot (README-informed, Claude API backend) |
+
+### Health Check
+
+```
+GET /health → { status: "ok", service: "kavach-api", env: "development" }
+```
 
 ---
 
-### Phase 3: Weeks 5–6 — Scale & Optimise
-
-**Deliverables:**
-- Full fraud detection system: all 7 layers
-- Razorpay integration: UPI AutoPay for premiums + UPI Payout API for claims
-- WhatsApp Business API for notifications
-- Insurer analytics dashboard: loss ratios, zone risk maps, predictive next-week disruption analytics
-- Worker dashboard: earnings protected this week, claims history, DIT insight ("You would have earned ₹420 in that window")
-- Performance: claim auto-approval pipeline to run in <5 minutes end-to-end
-- Multi-language support: Hindi + Tamil interface in addition to English
-
----
-
-## 11. Loophole Analysis & Failure-Proofing
-
-This section documents every scenario where the system could be gamed or fail — and our defense.
+## 12. Loophole Analysis & Failure-Proofing
 
 | Loophole | Attack Vector | Defense |
 |---|---|---|
-| **Zone gaming** | Worker registers in a safe zone, switches GPS to a flooded zone during disruption | GPS trajectory analysis: worker must show consistent location history in zone for >7 days; sudden zone change = freeze claim for manual review |
-| **Colluding workers** | Group of workers coordinate to fake a "zone freeze" event (Community Validation Layer 3 requires 15+ workers idle) | Isolation Forest on earnings patterns: genuine disruptions have normal distribution of idle workers; coordinated fraud shows suspicious clustering in account age and registration date |
-| **New account flooding** | Creating multiple accounts to claim in first week | Aadhaar linkage = 1 person = 1 account. Cooling-off period for week-1 claims. Device fingerprinting (1 device = 1 account flag) |
-| **Pre-disruption app shutdown** | Worker turns off the app before the rain starts (no orders → no income to compare against) to later claim "I couldn't work" | DIT compares to baseline. If worker's app was offline BEFORE disruption = "voluntarily offline" = no payout. Only workers with the app ONLINE but unable to receive orders get paid. |
-| **Last-minute policy purchase** | Worker buys policy right as a cyclone warning is issued | 24-hour policy seasoning period. Policy purchased after a public weather alert for that region is issued = auto-pended for that specific event. |
-| **API manipulation** | Developer gains API access and injects false weather data | Multi-source validation (3 independent sources). Our infrastructure never trusts a single feed. All triggers logged with raw API responses for audit. |
-| **Platform API unavailability** | Zomato/Swiggy does not give API access | Phase 1–2 uses mocked/simulated APIs. Phase 3 explores platform partnership. Fallback: worker provides app screenshot → CV model validates. |
-| **AQI fraud (indoor workers claiming)** | Worker who delivers by motorbike claims AQI disruption but was working anyway | GPS + platform data: if orders were completed, no payout regardless of trigger. AQI payout requires BOTH: AQI threshold crossed AND zero order completions in that window. |
-| **Trigger threshold manipulation** | Worker pressures insurer to lower trigger thresholds | Thresholds are hard-coded in smart contract logic (Phase 3: optionally on-chain for immutability). Changes require dual governance approval (insurer + actuarial team). |
-| **Multiple platform double-dipping** | Worker claims Zomato disruption, earns on Swiggy, claims full loss | Cross-platform income aggregation. Net income = Zomato earned + Swiggy earned. Payout = 70% × (DIT_predicted - net_actual_earned). |
-| **Historical earning inflation** | Worker manipulates historical earnings to inflate DIT predictions | DIT is trained on direct platform API data, not worker-self-reported figures. Worker cannot inflate the baseline — only the platform data can do so. |
-
+| **Zone gaming** | Worker registers in safe zone, switches GPS to flooded zone | GPS trajectory analysis; PPCS cell tower check exposes home location |
+| **Colluding workers** | Group fakes a "zone freeze" (community consensus) | UPI clustering + coordinated arrival-time spike detection; Isolation Forest on behavioral uniformity |
+| **New account flooding** | Multiple accounts claim in first week | DPDP-linked phone = 1 identity; 30-point score penalty for week-1 accounts |
+| **Pre-disruption app shutdown** | Worker turns off app before rain starts | DIT baseline comparison: if app was offline before disruption = "voluntarily offline" = no payout |
+| **Last-minute policy purchase** | Policy bought as cyclone warning is issued | 24-hour policy seasoning period; +25 fraud score for policies < 24hr old |
+| **API manipulation** | False weather data injection | Multi-source validation; all trigger API responses logged in AuditLog |
+| **AQI fraud (indoor workers)** | Worker claims AQI disruption but completed orders anyway | Layer 2 cross-validates actual earnings against predicted loss |
+| **Multiple platform double-dipping** | Claims Zomato disruption while earning on Swiggy | Cross-platform net income aggregation; `net_loss = predicted − sum(all_actual_earned)` |
+| **Historical earning inflation** | Worker self-reports high income to inflate DIT | DIT uses `verifiedWeeklyIncome` when available; declared income subject to platform cross-check |
+| **Velocity gaming** | Worker inflates claim window to get higher predicted loss | Velocity anomaly layer (4.5) compares hourly rate against worker's own 4-week baseline |
 
 ---
 
-## 12. Adversarial Defense & Anti-Spoofing Strategy
+## 13. Adversarial Defense & Anti-Spoofing Strategy
 
-This section directly addresses the threat scenario in which a coordinated syndicate of delivery workers uses GPS-spoofing applications to fake their location inside a weather disruption zone while physically resting at home — triggering mass false payouts and draining the liquidity pool.
+This section addresses the threat scenario where a coordinated syndicate uses GPS-spoofing applications to fake their location inside a weather disruption zone while physically resting at home.
 
-KAVACH's defense is not a single check — it is a **convergence of 4 device-level signals and 5 ring-level signals** that a spoofer must defeat simultaneously, all using data that is legally accessible and technically feasible on standard Android devices in India.
+### The Differentiation — Genuine Worker vs. GPS Spoofer
 
----
-
-### 1. The Differentiation — Genuine Stranded Worker vs. GPS Spoofer
-
-The core insight is this: **a spoofed GPS signal is just a coordinate. A genuine worker in a flood zone leaves a fingerprint across multiple data streams simultaneously.** A spoofing app can fake the coordinate — it cannot fake all the correlated signals at once.
-
-All four signals below are accessible via standard Android APIs with permissions already required by any delivery partner app (location, activity recognition, phone state). No special or invasive permissions are needed.
-
-#### Signal Stack: What a Real Worker Looks Like vs. a Spoofer
+A spoofed GPS signal is just a coordinate. A genuine worker leaves a fingerprint across multiple simultaneous data streams. The spoofing app can fake the coordinate — it cannot fake all correlated signals at once.
 
 | Signal | Genuine Stranded Worker | GPS Spoofer at Home |
 |---|---|---|
-| **GPS jitter** | Natural micro-variation (0.5–3m drift, irregular cadence) | Unnaturally smooth path or instant coordinate jump between pings |
-| **Device motion continuity** | Continuous accelerometer + location trail shows physical travel into the zone before the trigger fired | Location appears in the zone at or after trigger time with no prior trajectory — teleportation pattern |
-| **Cell tower IDs** | Tower IDs match the claimed delivery zone, differ from the home address tower registered at onboarding | Tower IDs match the home address registered at onboarding — phone has not moved |
-| **Platform app heartbeat** | Zomato/Swiggy app active in foreground, repeatedly polling for orders | App polling stops or behaves inconsistently despite claimed online status |
+| **GPS jitter** | Natural micro-variation (0.5–3m, irregular cadence) | Unnaturally smooth or instant coordinate jump |
+| **Device motion continuity** | Continuous accelerometer + location trail into zone | Location appears in zone at trigger time with no prior trajectory |
+| **Cell tower IDs** | Match delivery zone; differ from home address tower | Match home address registered at onboarding |
+| **Platform app heartbeat** | Zomato/Swiggy actively polling for orders | App polling stops or behaves inconsistently |
 
-The ML model computes a **Physical Presence Confidence Score (PPCS)** from these four signals. A payout is only auto-approved when PPCS exceeds the threshold AND the fraud score is below 30.
+These four signals compute the **Physical Presence Confidence Score (PPCS)**. A payout is only auto-approved when PPCS ≥ 80 AND fraud score ≤ 30.
 
----
+### Detecting Coordinated Fraud Rings
 
-### 2. The Data — Detecting a Coordinated Fraud Ring
+Individual spoofers are caught by PPCS. Coordinated rings are detected through graph-layer analysis:
 
-Individual spoofers are caught by the signal stack above. **Coordinated rings are harder** — 500 workers spoofing simultaneously are designed to overwhelm the community consensus layer by faking a genuine zone-wide disruption pattern. KAVACH detects ring behaviour through **graph-layer analysis** on data that already exists within the platform.
+- **Registration clustering:** Genuine zones have accounts registered across months/years. Rings recruited via Telegram show accounts created in the same narrow window.
+- **Coordinated arrival time-spike:** Genuine workers drift into a disruption zone organically over 30–60 minutes. Ring members following instructions all "arrive" within minutes of each other.
+- **Behavioral uniformity score:** In genuine disruptions, workers show varied behavior. Ring members following a script show unnaturally uniform idle patterns simultaneously.
+- **UPI payout destination clustering:** If claimants from the same event share UPI handles from the same bank branch, the ring's financial infrastructure is exposed (Layer 7: `UPI_CLUSTER_RING_DETECTED`).
 
-**Account Registration Clustering**
-- Workers in a genuine zone have registration dates spread across months or years
-- A fraud ring recruited via Telegram shows accounts registered within the same narrow window of days or weeks
-- If 50+ accounts share the same device model + Android version + app install timestamp, that cluster is statistically impossible by chance and triggers a ring flag
+### Tiered Response Protocol — Protecting Honest Workers
 
-**Coordinated Arrival Time-Spike**
-- Genuine workers drift into a disruption zone organically over 30–60 minutes as conditions worsen
-- Ring members following Telegram instructions all "arrive" in the zone within minutes of each other
-- KAVACH monitors the time-distribution of location arrivals per zone per trigger event. A normal spread = genuine disruption. A sharp simultaneous spike = coordinated entry
+The system never hard-rejects a claim on a single anomalous signal. It escalates proportionally:
 
-**Behavioral Uniformity Score**
-- In genuine disruptions, workers show varied behaviour: some attempt a few more orders, some wait, some leave early
-- Ring members following a script show unnaturally uniform behaviour — all go idle at exactly the same time with identical session patterns
-- Isolation Forest flags clusters where inter-worker behavioural variance drops below the historical norm for that zone
+**Tier 1 — Auto-Approve (PPCS ≥ 80, Fraud ≤ 30):** Payout in minutes. No action required. The experience for the vast majority of honest workers.
 
-**Payout Destination Clustering**
-- If a large share of claimants from the same event share UPI handles linked to the same bank branch or the same payment intermediary, the ring's financial infrastructure is exposed
-- Cross-claim UPI graph analysis runs automatically on every batch payout event
+**Tier 2 — Soft Flag (PPCS ≥ 50, Fraud ≤ 60):** Payout approved, held 2 hours. WhatsApp: *"Your KAVACH payout is being processed. No action needed. Payout arrives by [time]."* No burden on the worker.
 
-**Premium Activation Spike**
-- Ring members activate policies just before a planned fraud event
-- If a large cohort of workers in the same zone activate policies within 48 hours of each other with no corresponding weather forecast justification, the entire cohort is flagged for elevated scrutiny during that week's trigger events
+**Tier 3 — Verify (Fraud ≤ 80):** Payout held. WhatsApp requests a quick geotagged photo. Takes 10 seconds. CV model validates location consistency. If no response in 4 hours → manual review, never auto-rejected.
 
----
+**Tier 4 — Manual Review (Fraud > 80):** Claim held. Worker notified in neutral language. One-tap appeal option provided. Never told they are "suspected of fraud."
 
-### 3. The UX Balance — Protecting Honest Workers from False Flags
+### Why This Defeats the 500-Worker Syndicate
 
-The greatest risk of an aggressive anti-fraud system is penalising a genuine worker who is caught in a real disaster and happens to have a weak signal, an older phone, or lives near their delivery zone. A gig worker who just lost income to a flood and then gets their payout wrongly blocked is a failure of the entire product.
-
-KAVACH handles this through a **Tiered Response Protocol** — the system never hard-rejects a claim on a single anomalous signal. It escalates proportionally.
-
-**Tier 1 — Auto-Approve (PPCS ≥ 80, Fraud Score 0–30)**
-Worker receives payout within 12 minutes. No action required. This is the experience for the vast majority of honest workers.
-
-**Tier 2 — Soft Flag (PPCS 50–79, Fraud Score 31–60)**
-Payout approved but held for 2 hours. Worker receives a WhatsApp message:
-> *"Your KAVACH payout of ₹196 is being processed. We noticed your network signal was weak — this is normal in bad weather. No action needed. Payout arrives by [time]."*
-
-No burden on the worker. The hold exists only to allow post-event data reconciliation. If signals resolve in the worker's favour within 2 hours, payout releases automatically.
-
-**Tier 3 — Active Verification (PPCS 30–49, Fraud Score 61–80)**
-Payout held. Worker receives one simple WhatsApp request:
-> *"We want to make sure you're protected. Please send us a quick photo from where you are right now."*
-
-A geotagged photo takes 10 seconds. The CV model validates location consistency automatically. If validated, payout releases within 5 minutes. If the worker does not respond within 4 hours, the claim escalates to manual review — it is never auto-rejected.
-
-**Tier 4 — Manual Review (Fraud Score 81–100)**
-Claim held. Worker notified:
-> *"Your claim is under a brief security review. This usually takes less than 24 hours. If you have questions, reply to this message."*
-
-Language is always neutral. Worker is never told they are suspected of fraud. If rejected, they receive a plain-language explanation and a one-tap appeal option.
-
-#### The False-Positive Safety Net
-
-Workers whose Tier 3 or Tier 4 claims are ultimately approved receive a **goodwill fast-track** on their next 4 claims — they skip the verification step entirely, acknowledging that we caused them friction unfairly. Workers in zones with historically weak network coverage get a lower PPCS threshold, because we know their environment genuinely degrades signal quality.
-
----
-
-### Summary: Why This Defeats the 500-Worker Syndicate
-
-1. GPS spoofing apps produce smooth coordinates with no correlated motion trail → **PPCS collapses on jitter + motion continuity**
-2. Workers are physically at home → **cell tower IDs expose home location**
-3. Platform app behaviour is inconsistent with genuine waiting → **heartbeat check fails**
+1. GPS spoofing produces smooth coordinates → **PPCS collapses on jitter + motion continuity**
+2. Workers physically at home → **cell tower IDs expose home location**
+3. Platform app behavior inconsistent → **heartbeat check fails**
 4. All 500 arrive simultaneously → **coordinated arrival spike detected**
-5. Accounts were recently recruited → **registration clustering flagged**
-6. Uniform idle behaviour across 500 actors → **Isolation Forest fires**
-7. Shared UPI infrastructure → **payout graph exposes the ring**
+5. Accounts recently recruited → **registration clustering flagged**
+6. Uniform idle behavior → **Isolation Forest flags behavioral uniformity**
+7. Shared UPI infrastructure → **payout graph ring exposed**
 
-A genuine worker stranded in the same zone passes all signals naturally without doing anything differently. **The defense is invisible to honest workers and insurmountable to coordinated attackers.**
+A genuine worker stranded in the same zone passes all signals naturally. **The defense is invisible to honest workers and insurmountable to coordinated attackers.**
 
 ---
 
-## 13. Phase 2 & Recent Platform Implementations
-
-This section highlights all the major features, bug fixes, and scaling enhancements successfully integrated into the platform across our recent development tracking sessions:
+## 14. Recent Platform Implementations & Scaling
 
 ### 🌍 Localization & User Experience
-- **Full Regional Translation System:** Accomplished end-to-end localization across the platform enabling English, Hindi, and Tamil viewing specifically targeting the Onboarding Hero section, feature matrices, FAQs, and application footers to maximize accessibility for gig workers.
-- **Global Chatbot Widget:** Stabilized the platform-wide chatbot AI interface, integrating a custom visual avatar across all routing views to improve user satisfaction and help desk access.
+- **Full Regional Translation System:** End-to-end localization with 2,000+ translation keys across English, Hindi, and Tamil — covering Onboarding, Dashboard, Policy, Claims, and Admin views.
+- **Global AI Chatbot Widget:** Claude API-powered chatbot (`chatbotService.js`) with README-informed context, multi-turn conversation history (last 8 messages), topic-section routing, and keyword-based knowledge extraction. Available on all authenticated routes via `ChatbotWidget.jsx`.
+- **Language Selector:** Persistent language preference stored in React Context; `LanguageSelector.jsx` component available globally.
 
 ### 🛡️ Compliance & Regulatory Framework
-- **DPDP Act 2023 Consent Flow:** End-to-end mandatory digital consent integration during onboarding covering strict approvals for GPS tracking, bank details usage, and platform API polling. Added verifiable consent objects mapped to worker IDs for strict audit-trail accountability.
-- **Admin Visibility:** Granular compliance dashboard view indicating verified DPDP consent status for all registered workers.
+- **DPDP Act 2023 Consent Flow:** Three-consent capture during onboarding (GPS tracking, bank details, platform API polling). `dpdpConsent` object with `consentedAt` timestamp stored on every Worker document.
+- **Social Security Code 2020 Engagement Tracking:** `platformActiveDays` and `engagementQualified` fields on Worker model track the 90/120-day active-day threshold for single vs. multi-platform workers.
+- **Admin Compliance Dashboard:** Granular DPDP consent status visible per worker in `AdminDashboard.jsx`.
 
-### 🚫 Risk Mitigation & Engagement 
-- **Pre-emptive Lockout Mechanism (Adverse Selection):** Auto-locks new policy enrollments for 48 hours within zip codes currently experiencing Level 3+ severe weather alerts to explicitly prevent adverse selection.
-- **Engagement Health Tracking (90/120 Day Rule):** Enforces a strict activity verification protocol — tracking valid workers who exhibit >90 active workdays for single-platform operations, and >120 days for multi-platform operations (Swiggy + Zomato).
+### 🚫 Risk Mitigation
+- **Pre-emptive Adverse Selection Lockout:** New policy enrollment is blocked for workers in cities/zones currently experiencing Level 3+ alerts. Logic runs at policy creation time in `policies.js`.
+- **Seasonal Trigger Probability:** `historicalDisruption.js` reads IMD historical disruption data from `historical_disruption.csv` and computes per-city seasonal trigger probabilities, directly feeding the surge loading calculation in `premiumService.js`.
 
-### 🛠️ Core Engine & Flow Fixes
-- **Robust Automated Claim Processing:** Fixed a critical data-structure routing mismatch between the claims webhook and the fraud service prediction engine, effectively resolving 500 server errors and creating a seamless zero-touch automated claim payout.
-- **Persistent Registration & Redirects:** Patched the onboarding flow logic to seamlessly redirect already-registered and verified users directly to their dashboards, eliminating endless login loops. 
+### 🛠️ Core Engine Implementation
+- **Automated Claim Processing Pipeline:** Full end-to-end zero-touch flow — trigger detected → DIT prediction → fraud scoring → payout decision → Razorpay disbursement → Sepolia ETH log → WhatsApp notification → AuditLog entry.
+- **IST-Aware Shift Window Calculation:** `buildDateAtTime()` in `claims.js` correctly handles IST (UTC+5:30) shift boundaries for accurate overlap calculation between disruption windows and worker shifts.
+- **4 Scheduled Cron Jobs:**
+  - **Monday 00:01 IST** — Expire last week's policies, increment claims-free counters, auto-renew policies for verified workers
+  - **Every 30 minutes** — Trigger monitor scans OpenWeatherMap, CPCB AQI, platform heartbeats for all active workers; initiates auto-claim if triggered
+  - **Monday 01:00 IST** — Recompute `avgEarningsPerHour` and `avgOrdersPerHour` per worker from 4-week rolling claim history (requires ≥ 3 approved claims for meaningful baseline)
+  - **Daily 00:00 IST** — Escalate stale pending claims (>24 hours) to `manual_review`
+- **Blockchain Integration:** `blockchainService.js` generates a SHA-256 hash of the payout receipt (claim ID, worker ID, amount, trigger type, fraud score, Razorpay ref, timestamp) and logs it on Sepolia ETH as a zero-value self-transfer with the full JSON payload in the `data` field — readable directly on Etherscan. Non-fatal: payout succeeds even if blockchain logging fails.
 
-### 📊 Scaled Administration & Stress Testing
-- **Foldable City-Group Worker Matrix:** Upgraded UI supporting thousands of workers, seamlessly collapsing and grouping datasets by city and zone with 'Expand All' capabilities for efficient admin data parsing.
-- **Stress-Test Simulation Environment:** Implemented an internal administrative tool designed to project portfolio impact under a hypothetical `14-Day Continuous Monsoon` stress loop against 70% of enrolled workers.
-- **Micro-Actuarial Sustainability Projections:** Enhanced BCR (Burning Cost Ratio) extrapolation models forecasting health metrics seamlessly scaled to 2K, 5K, and 10K+ worker portfolios. Calculates the absolute minimum worker mass required to successfully survive severe catastrophic scenarios leveraging reinsurance.
-- **Simulated 2,000-Worker Live Portfolio:** Validated the application's performance by expanding the database with over 2,000 active worker data points containing 3000+ realistic claims. Tuned claim frequencies and severities to safely enforce a target **<50% BCR**, strictly proving the platform's robust unit economics framework in realistic scenarios.
+### 📊 Administration & Analytics
+- **Admin Dashboard Analytics:** BCR (Burning Cost Ratio) calculation; claims by trigger type; claims by city; 7-day daily claim trend; fraud score distribution (0–30, 31–60, 61–80, 81–100 buckets); worker city/zone breakdown with expandable groups.
+- **Stress-Test Simulation:** Admin tool to project portfolio impact under worst-case monsoon scenarios across 2K/5K/10K worker portfolios.
+- **Simulated Portfolio Validation:** Tested with 2,000+ active workers and 3,000+ realistic claims; BCR maintained below 50% target at simulated scale.
+
+### 🤖 ML Service
+- **Stacked Ensemble (XGBoost + LightGBM + Ridge):** Trained on 60,000 synthetic samples via 5-fold cross-validation. R² 0.9874, MAE ₹16.79. Pre-trained artifacts shipped in `ml/artifacts/`.
+- **Delivery-Time Integration:** Kaggle food delivery dataset schema used to derive `orders_per_hour` as the central predictive signal — capturing how disruptions reduce order throughput, not just per-order pay.
+- **Rule-Based Fallback:** Automatic fallback when ML service is unreachable; `predictionSource` recorded in AuditLog.
+- **Retraining Pipeline:** `generate_data.py` + `train.py` can retrain on fresh synthetic data in ~3 minutes; or supply real claim data with `python train.py path/to/real_claims.csv`.
 
 ---
 
 ## Summary: Why KAVACH Wins
+
+| Dimension | Traditional Parametric | KAVACH |
 |---|---|---|
-| Payout accuracy | Flat amount (over/under pays everyone) | Precise per-worker predicted loss |
-| Fraud resistance | Single layer (claim threshold) | 7-layer defense, community validation |
-| Pricing fairness | One-size zone premium | Hyper-local + behavioral + seasonal |
-| Trigger reliability | Single API source | 3-source minimum confirmation |
-| Multi-platform workers | Ignores Swiggy if Zomato claim | Cross-platform net income calculation |
-| New worker handling | No history = no coverage or flat estimate | Cohort model for cold start |
-| Coverage granularity | Full day / half day | 30-minute interval precision |
-| Worker communication | App notification | WhatsApp-first (what workers actually use) |
-| Business sustainability | High fraud → unsustainable | Built-in fraud defense → viable unit economics |
+| Payout accuracy | Flat amount (over/under pays everyone) | Precise per-worker predicted loss (R² 0.9874) |
+| Fraud resistance | Single layer (claim threshold) | 7-layer engine + PPCS + ring detection |
+| Pricing fairness | One-size zone premium | Hyper-local + behavioral + seasonal + surge |
+| Trigger reliability | Single API source | Multi-source validation (3+ independent feeds) |
+| Multi-platform workers | Ignores secondary platforms | Cross-platform net income aggregation |
+| New worker handling | No history = flat estimate | Rule-based fallback; cohort model for cold start |
+| Coverage granularity | Full day / half day | Shift-window precision (IST-aware) |
+| Worker communication | App notification | WhatsApp-first + AI chatbot |
+| Audit trail | Internal database | Immutable on-chain (Sepolia ETH, Etherscan-verifiable) |
+| Business sustainability | High fraud → unsustainable | Built-in fraud defense → validated <50% BCR |
 
 ---
 
@@ -811,6 +1021,6 @@ This section highlights all the major features, bug fixes, and scaling enhanceme
 
 ---
 
-**Phase 2 Prototype:** [(https://kavach-sage-iota.vercel.app/)]
+**Phase 2 Prototype:** [https://kavach-sage-iota.vercel.app/]
 **Phase 1 Demo Video:** [https://drive.google.com/drive/folders/15QooszWazdxGJhgMfVfFb2STf7PS5G2z]
 **Phase 2 Demo Video:** [https://drive.google.com/drive/folders/15QooszWazdxGJhgMfVfFb2STf7PS5G2z]

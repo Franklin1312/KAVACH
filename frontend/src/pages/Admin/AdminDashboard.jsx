@@ -393,8 +393,8 @@ export default function AdminDashboard() {
                 return [
                   { label: '4-Week P2P Ratio', value: `${p2pPct}%`, color: p2pColor, sub: p2p > 0.85 ? 'CRITICAL' : p2p > 0.70 ? 'ELEVATED' : 'HEALTHY' },
                   { label: 'Net Margin (Current)', value: `${RUPEE}${(bep.net || 0).toLocaleString('en-IN')}`, color: (bep.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: `${bep.portfolioSize || 0} workers` },
-                  { label: 'Projected at 5K Workers', value: `${RUPEE}${(sustainability?.breakEvenProjections?.at5000?.net || 0).toLocaleString('en-IN')}`, color: (sustainability?.breakEvenProjections?.at5000?.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: 'Net margin' },
-                  { label: 'Projected at 10K Workers', value: `${RUPEE}${(sustainability?.breakEvenProjections?.at10000?.net || 0).toLocaleString('en-IN')}`, color: (sustainability?.breakEvenProjections?.at10000?.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: 'Net margin' },
+                  { label: 'Projected at 100K Workers', value: `${RUPEE}${(sustainability?.breakEvenProjections?.at100000?.net || 0).toLocaleString('en-IN')}`, color: (sustainability?.breakEvenProjections?.at100000?.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: 'Net margin' },
+                  { label: 'Projected at 250K Workers', value: `${RUPEE}${(sustainability?.breakEvenProjections?.at250000?.net || 0).toLocaleString('en-IN')}`, color: (sustainability?.breakEvenProjections?.at250000?.net || 0) >= 0 ? '#00A86B' : '#E53935', sub: 'Net margin' },
                 ].map((item) => (
                   <div key={item.label} style={{ background: '#fff', borderRadius: 16, padding: 20, textAlign: 'center', border: `2px solid ${item.color}15`, boxShadow: `0 4px 16px ${item.color}10` }}>
                     <div style={{ fontSize: 12, color: '#5A6478', marginBottom: 4 }}>{item.label}</div>
