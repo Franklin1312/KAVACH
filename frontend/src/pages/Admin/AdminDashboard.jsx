@@ -111,6 +111,22 @@ export default function AdminDashboard() {
 
   const summary = stats?.stats || {};
   const bcrColor = summary.bcrPct > 85 ? '#E53935' : summary.bcrPct > 70 ? '#F5A623' : '#00A86B';
+  const projectionConfig = [
+    { key: 'current', label: (entry) => `Current (${entry?.portfolioSize || 0})` },
+    { key: 'at100000', label: '100,000 Workers' },
+    { key: 'at250000', label: '250,000 Workers' },
+    { key: 'at1000000', label: '1,000,000 Workers' },
+  ];
+  const projectionRows = projectionConfig
+    .map(({ key, label }) => {
+      const entry = sustainability?.breakEvenProjections?.[key];
+      if (!entry) return null;
+      return {
+        name: typeof label === 'function' ? label(entry) : label,
+        ...entry,
+      };
+    })
+    .filter(Boolean);
   const adminProfile = {
     username: admin?.username || 'admin',
     phone: admin?.phone || 'Not available',
@@ -458,15 +474,10 @@ export default function AdminDashboard() {
             {/* Break-Even Projections */}
             <div className="card" style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, fontFamily: 'Outfit, sans-serif' }}>Break-Even Projections at Various Portfolio Sizes</div>
-              {sustainability?.breakEvenProjections ? (
+              {projectionRows.length > 0 ? (
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart
-                    data={[
-                      { name: `Current (${sustainability.breakEvenProjections.current.portfolioSize})`, ...sustainability.breakEvenProjections.current },
-                      { name: '2,000 Workers', ...sustainability.breakEvenProjections.at2000 },
-                      { name: '5,000 Workers', ...sustainability.breakEvenProjections.at5000 },
-                      { name: '10,000 Workers', ...sustainability.breakEvenProjections.at10000 },
-                    ]}
+                    data={projectionRows}
                     margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
@@ -480,13 +491,8 @@ export default function AdminDashboard() {
                     <Bar dataKey="premiums" fill="#0B3D91" radius={[4, 4, 0, 0]} name="Premiums" />
                     <Bar dataKey="payouts" fill="#FF6B35" radius={[4, 4, 0, 0]} name="Payouts" />
                     <Bar dataKey="net" radius={[4, 4, 0, 0]} name="Net Margin">
-                      {[
-                        sustainability.breakEvenProjections.current,
-                        sustainability.breakEvenProjections.at2000,
-                        sustainability.breakEvenProjections.at5000,
-                        sustainability.breakEvenProjections.at10000,
-                      ].map((entry, idx) => (
-                        <Cell key={idx} fill={entry.net >= 0 ? '#00A86B' : '#E53935'} />
+                      {projectionRows.map((entry, idx) => (
+                        <Cell key={idx} fill={(entry?.net || 0) >= 0 ? '#00A86B' : '#E53935'} />
                       ))}
                     </Bar>
                   </BarChart>
