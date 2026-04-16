@@ -450,7 +450,7 @@ The `predictionSource` field in the audit log records `"ml"` or `"rule_based"` f
 
 ### ML Service API
 
-The FastAPI service runs on `http://localhost:5001` (Python).
+The FastAPI service runs on `https://kavach-zepc.onrender.com` (Python).
 
 **`GET /health`** — Returns model metadata, OOF metrics, and uptime.
 
