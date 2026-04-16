@@ -12,7 +12,7 @@ ADMIN_API.interceptors.request.use((config) => {
 
 export const getAdminStats    = () => ADMIN_API.get('/admin/stats');
 export const getAdminClaims   = () => ADMIN_API.get('/admin/claims');
-export const getAdminWorkers  = () => ADMIN_API.get('/admin/workers');
+export const getAdminWorkers  = (params = {}) => ADMIN_API.get('/admin/workers', { params });
 export const getAdminSustainability = () => ADMIN_API.get('/admin/sustainability');
 export const getAdminHistoricalRisk = (city) => ADMIN_API.get(`/admin/historical-risk/${city}`);
 

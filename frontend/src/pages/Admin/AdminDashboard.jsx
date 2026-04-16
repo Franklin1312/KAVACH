@@ -27,19 +27,23 @@ const STATUS_COLORS = {
 };
 
 export default function AdminDashboard() {
+  const WORKERS_PAGE_SIZE = 250;
   const navigate = useNavigate();
   const { adminLogout, admin } = useAuth();
   const [stats, setStats] = useState(null);
   const [claims, setClaims] = useState([]);
   const [workers, setWorkers] = useState([]);
+  const [workersPagination, setWorkersPagination] = useState({ page: 1, pageSize: WORKERS_PAGE_SIZE, total: 0, totalPages: 1 });
   const [tab, setTab] = useState('overview');
   const [loading, setLoading] = useState(true);
+  const [workersLoading, setWorkersLoading] = useState(false);
   const [stress, setStress] = useState(null);
   const [stressLoading, setStressLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState({});
   const [sustainability, setSustainability] = useState(null);
   const [sustainLoading, setSustainLoading] = useState(false);
   const [expandedCities, setExpandedCities] = useState({});
+  const [workersLoadedOnce, setWorkersLoadedOnce] = useState(false);
 
   const token = localStorage.getItem('kavach_admin_token');
   const headers = { Authorization: `Bearer ${token}` };
@@ -53,25 +57,44 @@ export default function AdminDashboard() {
     alert(err.response?.data?.error || fallbackMessage);
   };
 
-  const fetchAll = () => {
+  const fetchDashboardData = () => {
     setLoading(true);
     Promise.all([
       getAdminStats().then(({ data }) => setStats(data)),
       getAdminClaims().then(({ data }) => setClaims(data.claims || [])),
-      getAdminWorkers().then(({ data }) => setWorkers(data.workers || [])),
       getAdminSustainability().then(({ data }) => setSustainability(data)).catch(() => { }),
     ])
       .catch((err) => handleAdminError(err, 'Could not load admin dashboard'))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  const fetchWorkersPage = (page = workersPagination.page) => {
+    setWorkersLoading(true);
+    return getAdminWorkers({ page, pageSize: WORKERS_PAGE_SIZE })
+      .then(({ data }) => {
+        setWorkers(data.workers || []);
+        setWorkersPagination(data.pagination || { page, pageSize: WORKERS_PAGE_SIZE, total: 0, totalPages: 1 });
+        setWorkersLoadedOnce(true);
+        setExpandedCities({});
+      })
+      .catch((err) => handleAdminError(err, 'Could not load workers'))
+      .finally(() => setWorkersLoading(false));
+  };
+
+  useEffect(() => { fetchDashboardData(); }, []);
+
+  useEffect(() => {
+    if (tab === 'workers' && !workersLoadedOnce) {
+      fetchWorkersPage(1);
+    }
+  }, [tab, workersLoadedOnce]);
 
   const handleApprove = async (claimId) => {
     setActionLoading((current) => ({ ...current, [claimId]: 'approving' }));
     try {
       await axios.put(`${API}/admin/claims/${claimId}/approve`, { reviewNotes: 'Manually approved by admin' }, { headers });
-      fetchAll();
+      fetchDashboardData();
+      if (tab === 'workers' && workersLoadedOnce) fetchWorkersPage(workersPagination.page);
     } catch (err) {
       handleAdminError(err, 'Approve failed');
     } finally {
@@ -85,7 +108,8 @@ export default function AdminDashboard() {
     setActionLoading((current) => ({ ...current, [claimId]: 'rejecting' }));
     try {
       await axios.put(`${API}/admin/claims/${claimId}/reject`, { reason }, { headers });
-      fetchAll();
+      fetchDashboardData();
+      if (tab === 'workers' && workersLoadedOnce) fetchWorkersPage(workersPagination.page);
     } catch (err) {
       handleAdminError(err, 'Reject failed');
     } finally {
@@ -143,7 +167,16 @@ export default function AdminDashboard() {
           <span style={{ color: '#5A6478', fontSize: 11, background: '#EBF0FA', padding: '3px 10px', borderRadius: 20, fontWeight: 600 }}>Admin Panel</span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-secondary" onClick={fetchAll} style={{ padding: '8px 16px' }}>Refresh</button>
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              fetchDashboardData();
+              if (tab === 'workers' && workersLoadedOnce) fetchWorkersPage(workersPagination.page);
+            }}
+            style={{ padding: '8px 16px' }}
+          >
+            Refresh
+          </button>
           <button
             id="admin-logout-btn"
             onClick={() => { adminLogout(); navigate('/', { replace: true }); }}
@@ -273,7 +306,9 @@ export default function AdminDashboard() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <div>
                   <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'Outfit, sans-serif' }}>Registered Workers</div>
-                  <div style={{ color: '#9CA3AF', fontSize: 13, marginTop: 2 }}>{workers.length} workers across {cities.length} cities</div>
+                  <div style={{ color: '#9CA3AF', fontSize: 13, marginTop: 2 }}>
+                    Showing {workers.length} of {workersPagination.total.toLocaleString('en-IN')} workers across {cities.length} cities on this page
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => { const all = {}; cities.forEach((c) => all[c] = true); setExpandedCities(all); }} style={{ background: '#EBF0FA', color: '#0B3D91', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Expand All</button>
@@ -281,6 +316,32 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, background: '#fff', borderRadius: 12, padding: '12px 16px', border: '1px solid #E5E7EB' }}>
+                <div style={{ color: '#5A6478', fontSize: 13 }}>
+                  Page {workersPagination.page} of {workersPagination.totalPages}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    onClick={() => fetchWorkersPage(workersPagination.page - 1)}
+                    disabled={workersLoading || workersPagination.page <= 1}
+                    style={{ background: workersPagination.page <= 1 ? '#F3F4F6' : '#EBF0FA', color: workersPagination.page <= 1 ? '#9CA3AF' : '#0B3D91', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: workersPagination.page <= 1 ? 'not-allowed' : 'pointer' }}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => fetchWorkersPage(workersPagination.page + 1)}
+                    disabled={workersLoading || workersPagination.page >= workersPagination.totalPages}
+                    style={{ background: workersPagination.page >= workersPagination.totalPages ? '#F3F4F6' : '#0B3D91', color: workersPagination.page >= workersPagination.totalPages ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: workersPagination.page >= workersPagination.totalPages ? 'not-allowed' : 'pointer' }}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+
+              {workersLoading ? (
+                <div className="card" style={{ color: '#5A6478', fontSize: 14, textAlign: 'center', padding: 36 }}>Loading workers page...</div>
+              ) : (
+                <>
               {cities.map((city) => {
                 const isExpanded = expandedCities[city];
                 return (
@@ -347,6 +408,8 @@ export default function AdminDashboard() {
                 </div>
                 );
               })}
+                </>
+              )}
             </div>
           );
         })()}

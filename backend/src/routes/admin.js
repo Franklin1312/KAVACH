@@ -95,11 +95,30 @@ router.get('/claims', async (req, res) => {
 // ─── GET /api/admin/workers ───────────────────────────────────────────────────
 router.get('/workers', async (req, res) => {
   try {
-    const workers = await Worker.find({ isVerified: true })
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageSize = Math.min(Math.max(parseInt(req.query.pageSize, 10) || 250, 1), 500);
+    const skip = (page - 1) * pageSize;
+
+    const [workers, total] = await Promise.all([
+      Worker.find({ isVerified: true })
       .select('name phone city zone platforms declaredWeeklyIncome zoneRiskFactor fraudScore claimsFreeWeeks platformActiveDays engagementQualified dpdpConsent createdAt')
       .sort({ createdAt: -1 })
-      .limit(2000);
-    res.json({ success: true, workers });
+      .skip(skip)
+      .limit(pageSize)
+      .lean(),
+      Worker.countDocuments({ isVerified: true }),
+    ]);
+
+    res.json({
+      success: true,
+      workers,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
