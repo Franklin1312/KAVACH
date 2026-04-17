@@ -92,6 +92,9 @@ Food delivery workers have the **clearest and most measurable income patterns**,
 
 KAVACH is designed for **all four**, with city-specific risk models and localized disruption thresholds.
 
+For Mock Preview: We have used 50000 workers as test data taken from Gig |Open Government Data (OGD) Platform India.
+Link: https://www.data.gov.in/keywords/Gig
+
 ---
 
 ## 3. Application Workflow & Persona Scenarios
