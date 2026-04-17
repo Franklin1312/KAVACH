@@ -9,7 +9,7 @@ KAVACH is a comprehensive, production-ready insure-tech ecosystem. Our architect
 *   🧠 **AI Digital Income Twin (DIT):** A stacked ensemble model (XGBoost + LightGBM + Ridge meta-learner) with R² 0.9874 and MAE ₹16.79 that accurately predicts the exact revenue a worker *would have earned* during a disruption window — calibrated on 60,000 training samples and anchored to IDInsight 2024 real-world Indian gig worker earnings data.
 *   🚦 **7-Layer Fraud Engine:** GPS zone validation, platform activity cross-validation, new-account cooling-off, historical behavioral baseline, per-worker velocity anomaly detection, duplicate claim prevention, last-minute policy purchase detection, and UPI payout-destination ring detection — all feeding into a Physical Presence Confidence Score (PPCS) for a final auto-approve / soft-flag / verify / manual-review decision.
 *   🔗 **Blockchain Audit Trail:** Approved payouts are immutably logged on the **Sepolia ETH Testnet** via Ethers.js — a SHA-256 hash of the payout receipt is embedded in a zero-value self-transfer transaction, creating a publicly verifiable record on Etherscan.
-*   📡 **Multi-Source Parametric Triggers:** 7 trigger types (rain, AQI, flood, curfew, platform outage, zone freeze, heat) verified against live OpenWeatherMap, CPCB AQI, and platform heartbeat APIs with ward-level geo-precision across 16 Indian cities.
+*   📡 **Multi-Source Parametric Triggers:** 7 trigger types (rain, AQI, flood, curfew, platform outage, zone freeze, heat) verified against live OpenWeatherMap, CPCB AQI, and platform heartbeat APIs with ward-level geo-precision across 16 Indian cities. Trigger boundaries use ward-level geodata backed by 10-year IMD and CWC historical disruption records for actuarially grounded seasonal probability calibration per ward.
 *   💸 **Zero-Touch Payouts via Razorpay:** Fully automated lifecycle from claim detection to UPI payout (with IMPS fallback), using Razorpay Contacts, Fund Accounts, and Payout APIs. Mock mode is available for local development.
 *   🔒 **DPDP Act 2023 Compliance:** End-to-end digital consent capture (GPS, bank details, platform API polling) stored on each worker record with timestamp for full audit-trail accountability.
 *   🛡️ **Adverse Selection Lockouts:** Dynamic lockouts halt new policy enrollments during Level 3+ events; 90/120-day engagement tracking (Social Security Code 2020) enforces minimum platform activity before policy eligibility.
@@ -291,17 +291,17 @@ KAVACH uses a **Tiered Multi-Source Trigger Validation** system. Each trigger ca
 
 | Event | Primary Source | Threshold | Backup Source | Geo-Precision |
 |---|---|---|---|---|
-| Heavy Rainfall | IMD Rainfall API | >35mm / 3 hours | OpenWeatherMap | Ward/zone level |
-| Extreme Heat | IMD Temperature API | Heat Index >46°C | Skymet Weather API | City level |
-| Flash Flood | CWC River Level API | RED alert | NDRF alert + Twitter geo | Zone level |
-| Severe AQI | CPCB AQI API | AQI > 400 (Severe) | AirVisual API | Zone level |
+| Heavy Rainfall | IMD Rainfall API | >35mm / 3 hours | OpenWeatherMap | Ward level |
+| Extreme Heat | IMD Temperature API | Heat Index >46°C | Skymet Weather API | Ward level |
+| Flash Flood | CWC River Level API | RED alert | NDRF alert + Twitter geo | Ward level |
+| Severe AQI | CPCB AQI API | AQI > 400 (Severe) | AirVisual API | Ward level |
 
 #### SOCIAL / CIVIL TRIGGERS
 
 | Event | Primary Source | Threshold | Backup Source | Geo-Precision |
 |---|---|---|---|---|
-| Curfew / Section 144 | State Police API | Official announcement | PIB press release API | District level |
-| Zone Closure | Municipal corporation API | Official closure notice | Google Maps road closure | Street level |
+| Curfew / Section 144 | State Police API | Official announcement | PIB press release API | Ward level |
+| Zone Closure | Municipal corporation API | Official closure notice | Google Maps road closure | Ward level |
 
 #### PLATFORM TRIGGERS
 
@@ -346,7 +346,7 @@ KAVACH currently supports **16 cities** across India with **10 delivery zones ea
 | Hyderabad | Gachibowli, HITEC City, Banjara Hills, Jubilee Hills, Uppal, Secunderabad, Kukatpally, Madhapur, Ameerpet, LB Nagar |
 | + 11 more | Pune, Kolkata, Ahmedabad, Jaipur, Lucknow, Surat, Kochi, Chandigarh, Indore, Nagpur, Coimbatore |
 
-Each zone has precise lat/lon coordinates for hyper-local weather and AQI API queries, falling back to city-level coordinates when zone data is unavailable.
+Each ward has precise lat/lon coordinates for hyper-local weather and AQI API queries, falling back to city-level coordinates when ward data is unavailable. Ward boundaries are sourced from municipal geodata and used as the primary trigger geo-precision layer across all 16 cities.
 
 ---
 
@@ -421,7 +421,7 @@ predicted_earnings = hourly_earnings × window_hours
 
 **Group 4: Platform** — `platform_enc`, `is_zomato`, `is_swiggy`, `vehicle_enc`, `order_enc`
 
-**Group 5: Location** — `city_enc`, `city_base_payout`, `zone_multiplier`
+**Group 5: Location** — `city_enc`, `city_base_payout`, `zone_multiplier` (ward-level multipliers across 160 wards in 16 cities)
 
 **Group 6: Interaction** — `time_x_traffic`, `time_x_weather`, `orders_x_demand`, `income_x_orders`, `income_x_demand`, `income_x_city`, `income_x_zone`, `demand_x_window`, `orders_x_window`, `rating_x_income`, `multi_x_earnings`, `festival_x_demand`, `expected_base`
 
@@ -498,9 +498,9 @@ The FastAPI service runs on `https://kavach-zepc.onrender.com` (Python).
 
 Fraud is the single greatest risk to parametric insurance viability. KAVACH's fraud system has **7 independent layers** plus a Physical Presence Confidence Score (PPCS).
 
-### Layer 1: GPS Zone Validation
+### Layer 1: GPS Ward Validation
 
-Verifies that the worker has a confirmed city + zone on record. Workers without a verified zone receive a score penalty of +20 and a `ZONE_NOT_VERIFIED` flag.
+Verifies that the worker has a confirmed city + ward on record. Workers without a verified ward receive a score penalty of +20 and a `ZONE_NOT_VERIFIED` flag.
 
 ### Layer 2: Platform Activity Cross-Validation
 
@@ -554,7 +554,7 @@ Calculated from device signals sent by the mobile app SDK:
 |---|---|---|---|
 | GPS jitter < 0.05 (unnaturally smooth) | Natural micro-drift | Suspiciously smooth | −30 pts |
 | Motion continuity absent | Continuous trajectory | No prior motion trail | −25 pts |
-| Cell tower doesn't match zone | Zone tower | Home tower | −25 pts |
+| Cell tower doesn't match ward | Ward tower | Home tower | −25 pts |
 | Platform app heartbeat absent | App actively polling | App not polling | −20 pts |
 
 PPCS starts at 100 and is deducted based on signals. Range: 0–100.
@@ -899,7 +899,7 @@ GET /health → { status: "ok", service: "kavach-api", env: "development" }
 
 | Loophole | Attack Vector | Defense |
 |---|---|---|
-| **Zone gaming** | Worker registers in safe zone, switches GPS to flooded zone | GPS trajectory analysis; PPCS cell tower check exposes home location |
+| **Zone gaming** | Worker registers in safe ward, switches GPS to flooded ward | GPS trajectory analysis; PPCS cell tower check exposes home location |
 | **Colluding workers** | Group fakes a "zone freeze" (community consensus) | UPI clustering + coordinated arrival-time spike detection; Isolation Forest on behavioral uniformity |
 | **New account flooding** | Multiple accounts claim in first week | DPDP-linked phone = 1 identity; 30-point score penalty for week-1 accounts |
 | **Pre-disruption app shutdown** | Worker turns off app before rain starts | DIT baseline comparison: if app was offline before disruption = "voluntarily offline" = no payout |
@@ -924,7 +924,7 @@ A spoofed GPS signal is just a coordinate. A genuine worker leaves a fingerprint
 |---|---|---|
 | **GPS jitter** | Natural micro-variation (0.5–3m, irregular cadence) | Unnaturally smooth or instant coordinate jump |
 | **Device motion continuity** | Continuous accelerometer + location trail into zone | Location appears in zone at trigger time with no prior trajectory |
-| **Cell tower IDs** | Match delivery zone; differ from home address tower | Match home address registered at onboarding |
+| **Cell tower IDs** | Match delivery ward; differ from home address tower | Match home address registered at onboarding |
 | **Platform app heartbeat** | Zomato/Swiggy actively polling for orders | App polling stops or behaves inconsistently |
 
 These four signals compute the **Physical Presence Confidence Score (PPCS)**. A payout is only auto-approved when PPCS ≥ 80 AND fraud score ≤ 30.
@@ -976,9 +976,10 @@ A genuine worker stranded in the same zone passes all signals naturally. **The d
 - **Social Security Code 2020 Engagement Tracking:** `platformActiveDays` and `engagementQualified` fields on Worker model track the 90/120-day active-day threshold for single vs. multi-platform workers.
 - **Admin Compliance Dashboard:** Granular DPDP consent status visible per worker in `AdminDashboard.jsx`.
 
-### 🚫 Risk Mitigation
-- **Pre-emptive Adverse Selection Lockout:** New policy enrollment is blocked for workers in cities/zones currently experiencing Level 3+ alerts. Logic runs at policy creation time in `policies.js`.
-- **Seasonal Trigger Probability:** `historicalDisruption.js` reads IMD historical disruption data from `historical_disruption.csv` and computes per-city seasonal trigger probabilities, directly feeding the surge loading calculation in `premiumService.js`.
+### Risk Mitigation
+- **Pre-emptive Adverse Selection Lockout:** New policy enrollment is blocked for workers in cities/wards currently experiencing Level 3+ alerts. Logic runs at policy creation time in `policies.js`.
+- **Ward-Level Geodata:** Trigger boundaries use ward-level municipal geodata replacing zone-level coordinates across all 16 cities, giving each trigger a sub-ward geographic footprint for more precise eligibility determination.
+- **10-Year IMD and CWC Historical Data Integration:** `historicalDisruption.js` reads 10 years of IMD rainfall and CWC river-level records from `historical_disruption.csv`, computing per-ward seasonal trigger probabilities that feed directly into the surge loading calculation in `premiumService.js`. This replaces city-level estimates with actuarially grounded, ward-specific seasonal risk factors.
 
 ### 🛠️ Core Engine Implementation
 - **Automated Claim Processing Pipeline:** Full end-to-end zero-touch flow — trigger detected → DIT prediction → fraud scoring → payout decision → Razorpay disbursement → Sepolia ETH log → WhatsApp notification → AuditLog entry.
@@ -991,7 +992,7 @@ A genuine worker stranded in the same zone passes all signals naturally. **The d
 - **Blockchain Integration:** `blockchainService.js` generates a SHA-256 hash of the payout receipt (claim ID, worker ID, amount, trigger type, fraud score, Razorpay ref, timestamp) and logs it on Sepolia ETH as a zero-value self-transfer with the full JSON payload in the `data` field — readable directly on Etherscan. Non-fatal: payout succeeds even if blockchain logging fails.
 
 ### 📊 Administration & Analytics
-- **Admin Dashboard Analytics:** BCR (Burning Cost Ratio) calculation; claims by trigger type; claims by city; 7-day daily claim trend; fraud score distribution (0–30, 31–60, 61–80, 81–100 buckets); worker city/zone breakdown with expandable groups.
+- **Admin Dashboard Analytics:** BCR (Burning Cost Ratio) — live with auto-suspension at 85%; premium collected per worker per week over a rolling 4-week trend; payout-to-premium ratio evolution by city and trigger type; projected break-even at 2K/5K/10K worker portfolio sizes; visualised reinsurer trigger thresholds; claims by trigger type; claims by city; 7-day daily claim trend; fraud score distribution (0–30, 31–60, 61–80, 81–100 buckets); worker city/ward breakdown with expandable groups.
 - **Stress-Test Simulation:** Admin tool to project portfolio impact under worst-case monsoon scenarios across 2K/5K/10K worker portfolios.
 - **Simulated Portfolio Validation:** Tested with 2,000+ active workers and 3,000+ realistic claims; BCR maintained below 50% target at simulated scale.
 
@@ -1013,6 +1014,7 @@ A genuine worker stranded in the same zone passes all signals naturally. **The d
 | Trigger reliability | Single API source | Multi-source validation (3+ independent feeds) |
 | Multi-platform workers | Ignores secondary platforms | Cross-platform net income aggregation |
 | New worker handling | No history = flat estimate | Rule-based fallback; cohort model for cold start |
+| Geo-precision | City / zone level | Ward-level boundaries from municipal geodata + 10-year IMD/CWC calibration |
 | Coverage granularity | Full day / half day | Shift-window precision (IST-aware) |
 | Worker communication | App notification | WhatsApp-first + AI chatbot |
 | Audit trail | Internal database | Immutable on-chain (Sepolia ETH, Etherscan-verifiable) |
@@ -1024,6 +1026,9 @@ A genuine worker stranded in the same zone passes all signals naturally. **The d
 
 ---
 
-**Phase 2 Prototype:** [https://kavach-sage-iota.vercel.app/]
+**Phase 3 Prototype:** [https://kavach-sage-iota.vercel.app/]
 **Phase 1 Demo Video:** [https://drive.google.com/drive/folders/15QooszWazdxGJhgMfVfFb2STf7PS5G2z]
 **Phase 2 Demo Video:** [https://drive.google.com/drive/folders/15QooszWazdxGJhgMfVfFb2STf7PS5G2z]
+**Phase 3 Demo Video:** [https://youtu.be/RuexaDi-Ffw?si=qrqADKY8HXKgZNXL]
+**PITCH-DECK PPT:** [https://docs.google.com/presentation/d/1tl6HcFfspr4rY81zyCPpB1Qfpx92gDDv/edit?usp=drivesdk&ouid=113433507046468001896&rtpof=true&sd=true]
+
