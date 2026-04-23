@@ -1021,7 +1021,7 @@ A genuine worker stranded in the same zone passes all signals naturally. **The d
 | Coverage granularity | Full day / half day | Shift-window precision (IST-aware) |
 | Worker communication | App notification | WhatsApp-first + AI chatbot |
 | Audit trail | Internal database | Immutable on-chain (Sepolia ETH, Etherscan-verifiable) |
-| Business sustainability | High fraud → unsustainable | Built-in fraud defense → validated <50% BCR |
+| Business sustainability | High fraud → unsustainable | Built-in fraud defense → validated <50% BCR | '
 
 ---
 
